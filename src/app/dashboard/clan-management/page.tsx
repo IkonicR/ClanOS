@@ -12,7 +12,7 @@ export default function ClanManagementPage() {
         </div>
         <h3 className="text-2xl font-bold tracking-tight text-white/90 mb-2">Total Clan Control on the Horizon</h3>
         <p className="text-muted-foreground max-w-md">
-            Soon you'll be able to manage members, promotions, and clan settings directly from here. Automate recruitment, track participation, and build a stronger clan with ease.
+            Soon you&apos;ll be able to manage members, promotions, and clan settings directly from here. Automate recruitment, track participation, and build a stronger clan with ease.
         </p>
       </div>
     </>
