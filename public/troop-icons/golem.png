@@ -1,0 +1,368 @@
+
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en" dir="ltr">
+<head>
+
+    
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-131485669-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-131485669-1');
+    </script>
+
+    <meta charset="utf-8" /><meta http-equiv="x-ua-compatible" content="ie=edge" /><meta name="viewport" content="width=device-width,&#32;initial-scale=1.0" /><style type="text/css">@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/latin/400/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/latin-ext/400/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/cyrillic/400/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/vietnamese/400/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/greek-ext/400/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/cyrillic-ext/400/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/greek/400/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:400;src:url(/cf-fonts/s/open-sans/5.0.20/hebrew/400/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/cyrillic/700/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/latin/700/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/greek-ext/700/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/hebrew/700/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/greek/700/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/cyrillic-ext/700/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/latin-ext/700/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:700;src:url(/cf-fonts/s/open-sans/5.0.20/vietnamese/700/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/greek/800/normal.woff2);unicode-range:U+0370-03FF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/greek-ext/800/normal.woff2);unicode-range:U+1F00-1FFF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/latin-ext/800/normal.woff2);unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20CF,U+2113,U+2C60-2C7F,U+A720-A7FF;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/cyrillic/800/normal.woff2);unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/latin/800/normal.woff2);unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/cyrillic-ext/800/normal.woff2);unicode-range:U+0460-052F,U+1C80-1C88,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/vietnamese/800/normal.woff2);unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;font-display:swap;}@font-face {font-family:Open Sans;font-style:normal;font-weight:800;src:url(/cf-fonts/s/open-sans/5.0.20/hebrew/800/normal.woff2);unicode-range:U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F;font-display:swap;}</style><link href="/bundles/styles?v=tKL0vYYKMNRgpb2jt7bO1F5y0G-Exc2HZZZCaKi3PoU1" rel="stylesheet"/>
+<link href="/styles/core-bundle.min.css?v=1" rel="stylesheet" type="text/css" /><link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" /><link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" /><link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" /><link rel="manifest" href="/icons/site.webmanifest" /><link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#5bbad5" /><meta name="msapplication-TileColor" content="#da532c" /><meta id="themecolor" name="theme-color" content="#FFFFFF" /><meta id="themecolorapple" name="apple-mobile-web-app-status-bar-style" content="#FFFFFF" /><title>
+	Clash Ninja - Clash of Clans Guides and Upgrade Tracker
+</title><meta property="og:site_name" content="Clash&#32;Ninja" />
+<link id="csstheme" rel="stylesheet" href="/styles/light.css" /><meta property="twitter:site" content="@ClashDotNinja" /><script type="text/javascript" src="https://hb.vntsm.com/v3/live/ad-manager.min.js" data-site-id="608ae23cab178721a5790f50" data-mode="scan" async="async"></script><script type="text/javascript">(function (c, l, a, r, i, t, y) {
+        c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+        t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+        y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", "q0in0m9zjq");</script></head>
+<body>
+    <form method="post" action="/images/entities/troops/golem.png" id="form1">
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="6hMFajpQsKJfMVVIsN7gdT3xE99EQTvlC89t/cOHkNyk7Q48HS/USb9ZkeBt2KLvFJvViUsxcpYTVAcbWHM7b7hatw6Yp5sJ2HjJKibkFf05TlyRjeC3V2jYVzdE/kyDLIgs5SkepPO2+SMHT5YkOLlh356qGwU5labxSxPbuzRjCGetMbs75Oj2W0fpIevfdtwZfOF9Ox6d6+XqbGh2QrGiVNqzzgNX8I41XjPiA67Td9RM0WQftgtHdI+WOIlfbUZVJD1vJif8XHAxTlZH5upbsazwkVQFwVEawO7KBKxrx0KXTJ3/9zXluStFBbec5lPCYoUxxaVDpI3OSDrBZ5iQsLgGHffYKsQISt2eeE7RpKhCO3tFimrGlUmkjBkRHIPhUaaRiT0ujht+BMhV6FisMo8jkIMG+x4YN1XdamrxRo8rQbHnbc87yCQoBqz35OEVR8ctXPsZHXG6JaYGTjYhzhnlShRE4JOM4AUwthXr0Aa45SkKasybS81dIDsDa+PMRkgdd+Ya88zyR3Ok+w==" />
+
+<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="AB827D4F" />
+<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="zhV1e/6rPNBZZ9shUWNmtlPc4DbaRFtOwSyJrBHvnUkCtUoFBjx8hxVSH2MuKEUNuu/81TMaROj+afxYyFevhfIphesMialet/giWZoTj8MTsXLMDcDYJpJbWwOXuabY" />
+    
+         <div id="pnlAlertBanner">
+	
+             
+            <div class="grid-container">
+
+                <div class="grid-x grid-padding-x">
+
+                    <div id="alert-banner-content" class="cell small-12"></div>
+
+                </div>
+
+            </div>
+
+        
+</div>
+
+        <div id="top-nav">
+
+            <div class="grid-container">
+
+                <div class="grid-x grid-padding-x">
+
+                    <div class="cell medium-4 show-for-medium">
+
+                        <ul>
+                            <li><a href="/"><i class="fas fa-home" aria-hidden="true"></i> Home</a></li>
+                        </ul>
+
+                    </div>
+
+                    <div class="cell small-12 medium-8">
+
+                        <ul style="float: right;">
+                            <li>
+
+                                <div id="css-switch-status">
+
+                                    Light
+
+                                </div>
+
+                                <div id="css-switch-holder">
+
+                                    <label class="css-switch">
+                                      <input id="chkCSSSwitch" type="checkbox" name="ctl00$chkCSSSwitch" />
+                                      <span class="css-slider"></span>
+                                    </label>
+
+                                </div>
+
+                            </li>
+                            
+                            <li class="show-for-medium"><a href="/feedback-support"><i class="fas fa-comment"></i> Feedback/Support</a></li>
+                            
+                            
+                            <li id="lnkRegister"><a href="/register"><i class="fas fa-edit"></i> Register</a></li>
+                            <li id="lnkLogin"><a href="/login"><i class="fas fa-sign-in"></i> Login</a></li>
+                        </ul>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="nav-bar">
+                
+            <div class="grid-container">
+
+                <div class="grid-x grid-padding-x">
+
+                    <div class="cell small-12 nav">
+            
+                        <div id="menu-button" class="button radius show-for-small-only" data-toggle="offCanvas"><i class="fas fa-bars"></i></div>
+
+                        <a href="/"><img src="/images/logo.png" id="logo" /></a>
+
+                        <ul class="show-for-medium nav-main-links" style="float: left;">
+                            <li><a href="/guides"><i class="fas fa-list"></i> Guides</a></li>
+                            <li><a href="/upgrade-tracker/overview"><i class="fas fa-trees"></i> Upgrade Tracker</a></li>
+                            
+                            <li><a href="/stats-tracker"><i class="fad fa-chart-line"></i> Stats <span class="show-for-large">Tracker</span></a></li>
+                        </ul>
+                    
+                        
+                    
+                    </div>
+
+                </div>
+                                
+            </div>
+
+        </div>
+
+        <div class="off-canvas-wrapper">
+
+            <div class="off-canvas position-right" id="offCanvas" data-off-canvas data-auto-focus="false">
+            
+                <ul class="vertical menu side-menu">
+                    <li class="text-center"><a href="/"><img src="/images/logo.png" style="height: 60px;"/></a></li>
+                    <li><a href="/"><i class="fas fa-home fa-fw"></i> Home</a></li>
+                    <li><a href="/guides"><i class="fas fa-list fa-fw"></i> Guides</a></li>
+                    <li><a href="/upgrade-tracker/overview"><i class="fas fa-trees fa-fw"></i> Upgrade Tracker</a></li>
+                    <li><a href="/stats-tracker"><i class="fad fa-chart-line"></i>Stats Tracker</a></li>
+					
+                    <li><a href="/blog"><i class="far fa-comment-lines fa-fw"></i> Blog</a></li>
+                      
+                    <li><a href="/feedback-support"><i class="fas fa-comment fa-fw"></i> Feedback/Support</a></li>
+                    
+                    
+                        
+                       
+                    <li id="lnkRegisterSide"><a href="/register"><i class="fas fa-edit fa-fw"></i> Register</a></li>
+                    <li id="lnkLoginSide"><a href="/login"><i class="fas fa-sign-in fa-fw"></i> Login</a></li>
+                    
+                </ul>
+
+                <div class="side-menu-app app-install-banner text-center" onclick="location.href='/get-the-app'">
+
+                    <i class="fas fa-download"></i> &nbsp; Get the Clash Ninja App
+
+                </div>
+
+                <div class="side-menu-rotation-lock text-center">
+
+                    <h2>Rotation Lock:</h2>
+
+                    <div class="button small radius" onclick="lockOrientation();"><i class="fas fa-lock"></i> Lock</div>
+
+                    <div class="button small radius" onclick="unlockOrientation();"><i class="fas fa-lock-open"></i> Unlock</div>
+
+                </div>
+
+            </div>
+
+            <div class="off-canvas-content" data-off-canvas-content>
+                
+                <div class="grid-container body-content">
+                    
+                    
+            
+                    
+
+    <div class="grid-x grid-margin-x">
+
+        <div class="cell small-12 medium-6 medium-offset-3 text-center error-page">
+
+            <h1 id="cphBody_h1title" data-text="500" class="glitch">Error 404</h1>
+
+            <p class="larger">We couldn't find that...</p>
+
+            <div id="pnlAdditionalLinks">
+
+                <hr />
+
+                <p>Try one of the links below:</p>
+
+                <a href="/" class="button radius"><i class="fas fa-home"></i> Home</a> <a href="/guides" class="button radius"><i class="fas fa-list"></i> Guides</a> <a href="/upgrade-tracker" class="button radius"><i class="fas fa-trees"></i> Upgrade Tracker</a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+                    
+
+                    <div id="pnlLoginRequired" class="reveal tiny login-modal text-center" data-reveal data-animation-in="fast fade-in" data-animation-out="fade-out">
+
+                        <h1>Not logged in</h1>
+    
+                        <p class="larger">You need to be logged into your Clash Ninja account to do this:</p>
+
+
+                        <div class="grid-x grid-padding-x">
+
+                            <div class="cell small-6">
+                                                        
+                                <a id="hypLoginModalRegister" class="button&#32;expanded&#32;radius" href="/register?ReturnUrl=/images/entities/troops/golem.png"><i class="fas fa-edit"></i> Register</a>
+
+                            </div>
+
+                            <div class="cell small-6">
+                                                        
+                                 <a id="hypLoginModalLogin" class="button&#32;radius&#32;expanded" href="/login?ReturnUrl=/images/entities/troops/golem.png">
+                            <i class="fas fa-sign-in"></i> Login
+                            </a>
+
+                            </div>
+    
+                        </div>
+
+                        <button class="close-button" data-close aria-label="Close modal" type="button">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+
+                        </div>
+                    
+                    </div>
+
+                </div>
+
+                <div id="footer">
+
+                    <div class="grid-container">
+
+                        <div class="grid-x grid-padding-x footer-top">
+
+
+                            <div class="cell small-6 medium-4 medium-order-2 medium-text-center">
+                            
+                                <ul class="footer-links">
+                                    <li><a href="/privacy">Privacy</a></li>
+                                    <li><a href="/terms-of-use">Terms of Use</a></li>
+                                </ul>
+
+                                <a id="footer-app-button" href="/get-the-app" class="button small radius" style="margin-top: 10px;"><i class="fas fa-info-circle"></i> Clash Ninja App</a>
+                                                
+                                <p>&copy; 2025 www.clash.ninja</p>
+                    
+                            </div>
+
+                            <div class="cell show-for-medium medium-4 medium-order-1 medium-text-left">
+
+                                <ul class="footer-links">
+                                    <li><a href="/guides"><i class="fas fa-list fa-fw"></i> Guides</a></li>
+                                    <li><a href="/upgrade-tracker/overview"><i class="fas fa-trees fa-fw"></i> Upgrade Tracker</a></li>
+                                    <li><a href="/stats-tracker"><i class="fad fa-chart-line fa-fw"></i> Stats Tracker</a></li>
+									
+                                    <li><a href="/blog"><i class="far fa-comment-lines fa-fw"></i> Blog</a></li>
+                                    <li><a href="/feedback-support"><i class="fas fa-comment fa-fw"></i> Feedback/Support</a></li>
+                                    
+                                </ul>
+                                                
+                            </div>
+                        
+                            <div class="cell small-6 medium-4 medium-order-3 text-right">
+                            
+                                <ul class="footer-links">
+                                    <li><a href="https://twitter.com/clashdotninja" target="_blank" rel="noopener">X (Twitter) <i class="fa-brands fa-x-twitter fa-fw"></i></a></li>
+                                    <li><a href="https://fb.me/ClashDotNinja" target="_blank" rel="noopener">Facebook <i class="fab fa-facebook-f fa-fw"></i></a></li>
+                                    <li><a href="https://discord.gg/dzHTSUb" target="_blank" rel="noopener">Discord <i class="fab fa-discord fa-fw"></i></a></li>
+                                    <li><a href="https://www.instagram.com/clashdotninja/" target="_blank" rel="noopener">Instagram <i class="fab fa-instagram fa-fw"></i></a></li>
+                                    <li><a href="https://www.threads.net/@clashdotninja" target="_blank" rel="noopener">Threads <i class="fa-brands fa-threads fa-fw"></i></a></li>
+                                    <li><a href="https://www.youtube.com/c/clashninja" target="_blank" rel="noopener">YouTube <i class="fab fa-youtube fa-fw"></i></a></li>
+									<li><a href="https://www.tiktok.com/@clashdotninja" target="_blank" rel="noopener">TikTok <i class="fab fa-tiktok fa-fw"></i></a></li>
+                                </ul>
+
+                            </div>
+
+                        </div>
+
+                        <div class="grid-x grid-padding-x footer-bottom">
+
+                            <div class="cell small-12 text-center">
+
+                                 <p>This material is unofficial and is not endorsed by Supercell. For more information see Supercell's Fan Content Policy: <a href="http://www.supercell.com/fan-content-policy" target="_blank" rel="noopener">www.supercell.com/fan-content-policy</a></p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="reveal" id="faq-modal" data-reveal data-animation-in="fast fade-in" data-animation-out="fade-out"></div>
+
+                    <div id="pnlVerifyModal" class="reveal tiny login-modal text-center" data-reveal data-animation-in="fast fade-in" data-animation-out="fade-out"></div>
+
+                    
+
+                    <div id="pnlLogoutConfirm" class="reveal small login-modal text-center" data-reveal data-animation-in="fast fade-in" data-animation-out="fade-out">
+
+                        <h1>Confirm Logout</h1>
+
+                        <p class="larger" style="margin-bottom: 20px;">Are you sure you wish to logout?</p>
+
+                        <div class="button radius alert" data-close style="right: 40px;"><i class="fas fa-arrow-left"></i> Back</div>
+
+                        <a href="/logout" class="button radius success" style="margin-left: 40px;"><i class="fas fa-sign-out"></i> Logout</a>
+
+                        <button class="close-button" data-close aria-label="Close modal" type="button">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+
+                    </div>
+
+					<script>
+						var au = false;
+					</script>
+
+                    <script src="/scripts/vendor/jquery.min.js"></script>
+                    <script src="/scripts/vendor/foundation.min.js"></script>
+
+                    <script src="/bundles/core-scripts?v=DNWc4vJq0RZ25IgXNe93jvJcDrNL4WnY6rd26VgBvNY1"></script>
+
+                    
+                    
+
+            
+                </div>
+
+            </div>
+
+        </div>
+
+        
+
+        <div id="footer-status-banner">
+
+            <div id="footer-status-bar-close" onclick="clearFooterStatusBar();" title="Dismiss"><i class="fas fa-times"></i></div>
+
+            <div class="grid-container">
+
+                <div class="grid-x grid-padding-x">
+
+                    <div id="footer-status-banner-content" class="cell small-12 text-center"></div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+    
+    <div class="vm-placement" data-id="60927c7a4e36631764631cdb" style="display:none"></div>
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "187b64e644214e00994b5352f28bfe5d"}'></script>
+    <script src="/scripts/prebid-ads.js"></script>
+    
+</body>
+</html>
