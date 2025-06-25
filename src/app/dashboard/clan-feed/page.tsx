@@ -78,14 +78,14 @@ const ClanFeedPage = () => {
         posts,
         (state: Post[], { postId, isLiked, likes }: { postId: string, isLiked: boolean, likes: number }) => {
             return state.map(post =>
-                post.id === postId ? { ...post, isLiked, likes } : post
+                post.id === postId ? { ...post, user_has_liked_post: isLiked, like_count: likes } : post
             );
         }
     );
 
     const handleLikeToggle = async (post: Post) => {
-        const newIsLiked = !post.isLiked;
-        const newLikesCount = newIsLiked ? post.likes + 1 : post.likes - 1;
+        const newIsLiked = !post.user_has_liked_post;
+        const newLikesCount = newIsLiked ? post.like_count + 1 : post.like_count - 1;
 
         setOptimisticPosts({ postId: post.id, isLiked: newIsLiked, likes: newLikesCount });
 
@@ -131,14 +131,14 @@ const ClanFeedPage = () => {
                         <Card key={post.id}>
                             <CardHeader className="flex flex-row items-center gap-4">
                                 <Avatar>
-                                    <AvatarImage src={post.avatar_url} />
-                                    <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={post.profiles?.avatar_url ?? undefined} />
+                                    <AvatarFallback>{post.profiles?.username.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{post.author}</p>
+                                    <p className="font-semibold">{post.profiles?.username}</p>
                                     <p className="text-sm text-muted-foreground">{new Date(post.created_at).toLocaleString()}</p>
                                 </div>
-                                {user?.id === post.author_id && (
+                                {user?.id === post.user_id && (
                                     <div className="ml-auto">
                                         {/* Add dropdown for edit/delete here */}
                                     </div>
@@ -158,9 +158,9 @@ const ClanFeedPage = () => {
                                     onClick={() => handleLikeToggle(post)}
                                 >
                                     <Heart
-                                        className={`w-4 h-4 ${post.isLiked ? 'text-red-500 fill-current' : ''}`}
+                                        className={`w-4 h-4 ${post.user_has_liked_post ? 'text-red-500 fill-current' : ''}`}
                                     />
-                                    <span>{post.likes}</span>
+                                    <span>{post.like_count}</span>
                                 </Button>
                                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                                     <MessageCircle className="w-4 h-4" />
