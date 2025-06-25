@@ -1,15 +1,30 @@
 "use client";
 
 import { MoveRight, Shield, Users, Zap } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { createClient } from "@/lib/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const { toast } = useToast();
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user ?? null);
+      setAuthLoading(false);
+    };
+
+    getSession();
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,10 +70,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden">
-      <div className="absolute top-6 right-6 z-20">
-        <Button asChild variant="outline" className="bg-transparent hover:bg-white/10 hover:text-white">
-          <Link href="/dashboard">Launch App</Link>
-        </Button>
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-4">
+        {!authLoading && (
+          <>
+            {user ? (
+              <Button asChild variant="outline" className="bg-transparent hover:bg-white/10 hover:text-white">
+                <Link href="/dashboard">Launch App</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="outline" className="bg-transparent hover:bg-white/10 hover:text-white">
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </>
+            )}
+          </>
+        )}
       </div>
       {/* Animated background */}
       <div className="fixed inset-0 -z-20">
