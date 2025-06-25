@@ -83,7 +83,7 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
             // We need to use the service role key to update the profile
             // because the user doesn't have a session yet.
             const supabaseAdmin = createAdminClient(
-                process.env.SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
                 process.env.SUPABASE_SERVICE_ROLE_KEY!,
                 { auth: { autoRefreshToken: false, persistSession: false } }
             );
