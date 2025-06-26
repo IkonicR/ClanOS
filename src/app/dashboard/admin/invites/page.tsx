@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -182,6 +182,7 @@ export default function AdminInvitesPage() {
                         <TableHead>Code</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Used By</TableHead>
+                        <TableHead>Created</TableHead>
                         <TableHead>Expires</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -198,11 +199,30 @@ export default function AdminInvitesPage() {
                             ) : invite.is_active ? (
                                 <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
                             ) : (
-                                <Badge variant="destructive" className="flex items-center w-fit"><Clock className="w-3 h-3 mr-1.5"/>Inactive</Badge>
+                                <Badge variant="secondary" className="flex items-center w-fit"><PauseCircle className="w-3 h-3 mr-1.5"/>Inactive</Badge>
                             )}
                         </TableCell>
                         <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
-                        <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>{new Date(invite.created_at).toLocaleDateString()}</TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{new Date(invite.created_at).toLocaleString()}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </TableCell>
+                        <TableCell>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>{new Date(invite.expires_at).toLocaleDateString()}</TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{new Date(invite.expires_at).toLocaleString()}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </TableCell>
                         <TableCell className="text-right space-x-2 flex items-center justify-end">
                             <TooltipProvider>
                             <Tooltip>
