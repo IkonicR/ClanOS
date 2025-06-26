@@ -16,6 +16,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import languages from '@/lib/languages.json';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import AdminInvitesPage from '../admin/invites/page';
 
 // Main Settings Page Layout
 const SettingsPage = () => {
@@ -42,6 +43,8 @@ const SettingsPage = () => {
                 return <NotificationSettings />;
             case 'account':
                 return <AccountSettings />;
+            case 'admin':
+                return <AdminInvitesPage />;
             default:
                 return null;
         }
@@ -79,6 +82,15 @@ const SettingsPage = () => {
                         activeTab={activeTab}
                         onClick={setActiveTab}
                     />
+                    {profile?.role === 'admin' && (
+                        <SettingsTab
+                            id="admin"
+                            icon={<Shield className="w-5 h-5" />}
+                            label="Admin"
+                            activeTab={activeTab}
+                            onClick={setActiveTab}
+                        />
+                    )}
                 </nav>
                 <div className="md:col-span-3">
                     {renderContent()}
@@ -117,7 +129,8 @@ interface ProfileData {
         discord?: string;
         twitter?: string;
         youtube?: string;
-    }
+    },
+    role?: 'admin' | 'user';
 }
 
 const useProfile = () => {

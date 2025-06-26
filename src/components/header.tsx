@@ -28,7 +28,6 @@ const navItems = [
     { label: 'War Room', href: '/dashboard/war-room' },
     { label: 'Clan Management', href: '/dashboard/clan-management' },
     { label: 'Analytics', href: '/dashboard/analytics' },
-    { label: 'Admin', href: '/dashboard/admin/invites', adminOnly: true },
 ];
 
 function NavLink({ href, children }: { href: string, children: React.ReactNode }) {
@@ -94,7 +93,7 @@ export function Header() {
                                 <span className="font-bold text-lg">ClanOS</span>
                             </Link>
                             <div className="flex flex-col space-y-2">
-                                {navItems.filter(item => !item.adminOnly || profile?.role === 'admin').map((item) => (
+                                {navItems.map((item) => (
                                     <NavLink key={item.href} href={item.href}>
                                         {item.label}
                                     </NavLink>
@@ -115,7 +114,7 @@ export function Header() {
             
             {/* Desktop Nav (Center) */}
             <nav className="hidden items-center justify-center gap-2 md:flex flex-1">
-                {navItems.filter(item => !item.adminOnly || profile?.role === 'admin').map((item) => (
+                {navItems.map((item) => (
                     <NavLink key={item.href} href={item.href}>
                         {item.label}
                     </NavLink>
