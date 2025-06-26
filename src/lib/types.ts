@@ -63,4 +63,5 @@ export type Profile = {
     avatar_url?: string;
     player_tag?: string;
     clan_tag?: string;
+    role?: 'admin' | 'user';
 };

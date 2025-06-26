@@ -16,9 +16,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Swords, Settings as SettingsIcon } from 'lucide-react';
+import { Menu, Swords, Settings as SettingsIcon, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FriendRequestsDropdown } from './friend-requests-dropdown';
+import { Profile } from '@/lib/types';
 
 const navItems = [
     { label: 'Dashboard', href: '/dashboard' },
@@ -27,6 +28,7 @@ const navItems = [
     { label: 'War Room', href: '/dashboard/war-room' },
     { label: 'Clan Management', href: '/dashboard/clan-management' },
     { label: 'Analytics', href: '/dashboard/analytics' },
+    { label: 'Admin', href: '/dashboard/admin/invites', adminOnly: true },
 ];
 
 function NavLink({ href, children }: { href: string, children: React.ReactNode }) {
@@ -49,15 +51,25 @@ function NavLink({ href, children }: { href: string, children: React.ReactNode }
 
 export function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
+    const fetchUserAndProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+
+      if (user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        setProfile(profileData);
+      }
     };
-    fetchUser();
-  }, [supabase.auth]);
+    fetchUserAndProfile();
+  }, [supabase, supabase.auth]);
 
   const getInitials = (name: string) => {
     return name?.split(' ').map((n) => n[0]).join('') ?? '';
@@ -79,10 +91,10 @@ export function Header() {
                         <div className='mt-6'>
                             <Link href="/dashboard" className="mb-8 flex items-center space-x-2">
                                 <Swords className="h-6 w-6 text-primary" />
-                                <span className="font-bold text-lg">Clan Manager</span>
+                                <span className="font-bold text-lg">ClanOS</span>
                             </Link>
                             <div className="flex flex-col space-y-2">
-                                {navItems.map((item) => (
+                                {navItems.filter(item => !item.adminOnly || profile?.role === 'admin').map((item) => (
                                     <NavLink key={item.href} href={item.href}>
                                         {item.label}
                                     </NavLink>
@@ -97,13 +109,13 @@ export function Header() {
             <Link href="/dashboard" className="mr-8 hidden items-center space-x-2 md:flex">
                 <Swords className="h-6 w-6 text-primary" />
                 <span className="font-bold">
-                Clan Manager
+                ClanOS
                 </span>
             </Link>
             
             {/* Desktop Nav (Center) */}
             <nav className="hidden items-center justify-center gap-2 md:flex flex-1">
-                {navItems.map((item) => (
+                {navItems.filter(item => !item.adminOnly || profile?.role === 'admin').map((item) => (
                     <NavLink key={item.href} href={item.href}>
                         {item.label}
                     </NavLink>
@@ -132,6 +144,14 @@ export function Header() {
                                 </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                {profile?.role === 'admin' && (
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/dashboard/admin/invites" className="flex items-center cursor-pointer">
+                                            <Shield className="w-4 h-4 mr-2" />
+                                            <span>Admin Panel</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem asChild>
                                     <Link href="/dashboard/settings" className="flex items-center cursor-pointer">
                                         <SettingsIcon className="w-4 h-4 mr-2" />
