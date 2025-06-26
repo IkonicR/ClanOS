@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { KeyRound, Copy, PlusCircle, Users, ToggleRight } from 'lucide-react';
+import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,6 +20,20 @@ interface InviteCode {
   used_at: string | null;
   is_active: boolean;
   expires_at: string;
+}
+
+function StatCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
+  return (
+    <Card className="bg-secondary/50">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function AdminInvitesPage() {
@@ -53,6 +67,14 @@ export default function AdminInvitesPage() {
     fetchInviteCodes();
   }, [fetchInviteCodes]);
 
+  const stats = useMemo(() => {
+    const total = inviteCodes.length;
+    const used = inviteCodes.filter(code => code.used_by).length;
+    const active = inviteCodes.filter(code => code.is_active && !code.used_by && new Date(code.expires_at) > new Date()).length;
+    const expired = inviteCodes.filter(code => new Date(code.expires_at) <= new Date() && !code.used_by).length;
+    return { total, used, active, expired };
+  }, [inviteCodes]);
+  
   const generateInviteCode = async () => {
     setIsGenerating(true);
     const { data: { user } } = await supabase.auth.getUser();
@@ -105,102 +127,116 @@ export default function AdminInvitesPage() {
   }
 
   return (
-    <Card className="border-border/60">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center">
-            <KeyRound className="w-6 h-6 mr-3 text-primary"/>
-            Invite Codes
-          </CardTitle>
-          <CardDescription className="pt-2">Generate and manage one-time use invite codes for new users.</CardDescription>
+    <div className="flex flex-col gap-6">
+       <Card className="border-border/60">
+        <CardHeader>
+            <CardTitle className="flex items-center">
+              <KeyRound className="w-6 h-6 mr-3 text-primary"/>
+              Invite Code Management
+            </CardTitle>
+            <CardDescription className="pt-2">Generate and manage one-time use invite codes for new users.</CardDescription>
+        </CardHeader>
+       </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard title="Total Generated" value={stats.total} icon={BarChart3} />
+            <StatCard title="Active Codes" value={stats.active} icon={CheckCircle2} />
+            <StatCard title="Used Codes" value={stats.used} icon={Users} />
+            <StatCard title="Expired Codes" value={stats.expired} icon={XCircle} />
         </div>
-        <Button onClick={generateInviteCode} disabled={isGenerating}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          {isGenerating ? 'Generating...' : 'Generate New Code'}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center items-center h-48">
-            <p>Loading invite codes...</p>
-          </div>
-        ) : inviteCodes.length === 0 ? (
-          <div className="text-center py-16 px-6 border-2 border-dashed border-border/50 rounded-lg">
-              <div className="flex justify-center mb-4">
-                  <div className="p-4 bg-secondary rounded-full">
-                      <Users className="w-8 h-8 text-secondary-foreground" />
-                  </div>
-              </div>
-              <h3 className="text-xl font-semibold">No Invite Codes Yet</h3>
-              <p className="text-muted-foreground mt-2 mb-6">Click &quot;Generate New Code&quot; to create your first invite.</p>
-              <Button onClick={generateInviteCode} disabled={isGenerating}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  {isGenerating ? 'Generating...' : 'Generate Code'}
-              </Button>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Used By</TableHead>
-                <TableHead>Created At</TableHead>
-                <TableHead>Expires At</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inviteCodes.map((invite) => (
-                <TableRow key={invite.id} className="hover:bg-secondary/50">
-                  <TableCell className="font-mono">{invite.code}</TableCell>
-                  <TableCell>
-                    {invite.used_by_username ? (
-                        <Badge variant="secondary">Used</Badge>
-                    ) : new Date(invite.expires_at) < new Date() ? (
-                        <Badge variant="destructive">Expired</Badge>
-                    ) : invite.is_active ? (
-                        <Badge variant="default" className="bg-green-600/90 text-white">Active</Badge>
-                    ) : (
-                        <Badge variant="destructive">Inactive</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
-                  <TableCell>{new Date(invite.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right space-x-2 flex items-center justify-end">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Switch
-                            checked={invite.is_active}
-                            onCheckedChange={() => handleToggleActive(invite)}
-                            disabled={!!invite.used_by || new Date(invite.expires_at) < new Date()}
-                            aria-label="Toggle code active"
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{invite.is_active ? 'Deactivate' : 'Activate'} Code</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Copy Code</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+        <Card className="border-border/60">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Generated Codes</CardTitle>
+                    <CardDescription>
+                        Here are all the invite codes that have been generated.
+                    </CardDescription>
+                </div>
+                <Button onClick={generateInviteCode} disabled={isGenerating}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                {isGenerating ? 'Generating...' : 'Generate New Code'}
+                </Button>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                <div className="flex justify-center items-center h-48">
+                    <p>Loading invite codes...</p>
+                </div>
+                ) : inviteCodes.length === 0 ? (
+                <div className="text-center py-16 px-6 border-2 border-dashed border-border/50 rounded-lg">
+                    <div className="flex justify-center mb-4">
+                        <div className="p-4 bg-secondary rounded-full">
+                            <Users className="w-8 h-8 text-secondary-foreground" />
+                        </div>
+                    </div>
+                    <h3 className="text-xl font-semibold">No Invite Codes Yet</h3>
+                    <p className="text-muted-foreground mt-2 mb-6">Click &quot;Generate New Code&quot; to create your first invite.</p>
+                    <Button onClick={generateInviteCode} disabled={isGenerating}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {isGenerating ? 'Generating...' : 'Generate First Code'}
+                    </Button>
+                </div>
+                ) : (
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Used By</TableHead>
+                        <TableHead>Expires</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {inviteCodes.map((invite) => (
+                        <TableRow key={invite.id} className="hover:bg-secondary/50">
+                        <TableCell className="font-mono">{invite.code}</TableCell>
+                        <TableCell>
+                            {invite.used_by ? (
+                                <Badge variant="secondary" className="flex items-center w-fit"><Users className="w-3 h-3 mr-1.5"/>Used</Badge>
+                            ) : new Date(invite.expires_at) < new Date() ? (
+                                <Badge variant="destructive" className="flex items-center w-fit"><XCircle className="w-3 h-3 mr-1.5"/>Expired</Badge>
+                            ) : invite.is_active ? (
+                                <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
+                            ) : (
+                                <Badge variant="destructive" className="flex items-center w-fit"><Clock className="w-3 h-3 mr-1.5"/>Inactive</Badge>
+                            )}
+                        </TableCell>
+                        <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
+                        <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right space-x-2 flex items-center justify-end">
+                            <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                <Switch
+                                    checked={invite.is_active}
+                                    onCheckedChange={() => handleToggleActive(invite)}
+                                    disabled={!!invite.used_by || new Date(invite.expires_at) < new Date()}
+                                    aria-label="Toggle code active"
+                                />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                <p>{invite.is_active ? 'Deactivate' : 'Activate'} Code</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
+                                    <Copy className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Copy Code</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            </TooltipProvider>
+                        </TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+                )}
+            </CardContent>
+        </Card>
+    </div>
   );
 } 
