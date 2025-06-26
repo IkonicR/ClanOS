@@ -6,9 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle } from 'lucide-react';
+import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle, PlayCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface InviteCode {
@@ -223,32 +222,42 @@ export default function AdminInvitesPage() {
                                 </Tooltip>
                             </TooltipProvider>
                         </TableCell>
-                        <TableCell className="text-right space-x-2 flex items-center justify-end">
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end space-x-1">
                             <TooltipProvider>
-                            <Tooltip>
+                              <Tooltip>
                                 <TooltipTrigger asChild>
-                                <Switch
-                                    checked={invite.is_active}
-                                    onCheckedChange={() => handleToggleActive(invite)}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleActive(invite)}
                                     disabled={!!invite.used_by || new Date(invite.expires_at) < new Date()}
-                                    aria-label="Toggle code active"
-                                />
+                                  >
+                                    {invite.is_active ? (
+                                      <PauseCircle className="h-4 w-4" />
+                                    ) : (
+                                      <PlayCircle className="h-4 w-4" />
+                                    )}
+                                    <span className="sr-only">{invite.is_active ? 'Deactivate' : 'Activate'}</span>
+                                  </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                <p>{invite.is_active ? 'Deactivate' : 'Activate'} Code</p>
+                                  <p>{invite.is_active ? 'Deactivate Code' : 'Activate Code'}</p>
                                 </TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
+                              </Tooltip>
+                              <Tooltip>
                                 <TooltipTrigger asChild>
                                     <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
                                     <Copy className="h-4 w-4" />
+                                    <span className="sr-only">Copy code</span>
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>Copy Code</p>
                                 </TooltipContent>
-                            </Tooltip>
+                              </Tooltip>
                             </TooltipProvider>
+                          </div>
                         </TableCell>
                         </TableRow>
                     ))}
