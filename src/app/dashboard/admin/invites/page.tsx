@@ -16,6 +16,7 @@ interface InviteCode {
   code: string;
   created_at: string;
   used_by: string | null;
+  used_by_username: string | null;
   used_at: string | null;
   is_active: boolean;
   expires_at: string;
@@ -32,24 +33,16 @@ export default function AdminInvitesPage() {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('invite_codes')
-      .select(`
-        id,
-        code,
-        created_at,
-        is_active,
-        used_at,
-        expires_at,
-        profiles(username)
-      `)
+      .select('*, profiles:used_by(username)')
       .order('created_at', { ascending: false });
 
     if (error) {
-      toast({ title: 'Error', description: 'Failed to fetch invite codes.', variant: 'destructive' });
+      toast({ title: 'Error fetching codes', description: error.message, variant: 'destructive' });
       setInviteCodes([]);
     } else {
       const formattedData = data.map((item: any) => ({
         ...item,
-        used_by: item.profiles?.username,
+        used_by_username: item.profiles?.username,
       }));
       setInviteCodes(formattedData);
     }
@@ -162,7 +155,7 @@ export default function AdminInvitesPage() {
                 <TableRow key={invite.id} className="hover:bg-secondary/50">
                   <TableCell className="font-mono">{invite.code}</TableCell>
                   <TableCell>
-                    {invite.used_by ? (
+                    {invite.used_by_username ? (
                         <Badge variant="secondary">Used</Badge>
                     ) : new Date(invite.expires_at) < new Date() ? (
                         <Badge variant="destructive">Expired</Badge>
@@ -172,7 +165,7 @@ export default function AdminInvitesPage() {
                         <Badge variant="destructive">Inactive</Badge>
                     )}
                   </TableCell>
-                  <TableCell>{invite.used_by ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
+                  <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
                   <TableCell>{new Date(invite.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right space-x-2 flex items-center justify-end">
