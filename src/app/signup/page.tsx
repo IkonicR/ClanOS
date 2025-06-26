@@ -18,7 +18,7 @@ export default async function SignUpPage() {
     .eq('code', inviteCode)
     .single();
 
-  if (error || !invite || invite.used_by || !invite.is_active || new Date(invite.expires_at) < new Date()) {
+  if (error || !invite || invite.used_by || new Date(invite.expires_at) < new Date()) {
     // Clear the invalid cookie and redirect
     cookieStore.delete('invite_code');
     redirect('/invite?message=The invite code is invalid or has expired.');

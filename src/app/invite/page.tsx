@@ -2,10 +2,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { KeyRound } from 'lucide-react';
+import { KeyRound, ShieldAlert } from 'lucide-react';
 import { verifyInviteCode } from './actions';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default async function InvitePage({
   searchParams,
@@ -30,28 +31,34 @@ export default async function InvitePage({
             </div>
           <CardTitle className="text-2xl">You&apos;re Invited</CardTitle>
           <CardDescription>
-            ClanOS is currently invite-only. Please enter your invite code to continue.
+            ClanOS is currently invite-only. Please enter your code to continue.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {searchParams?.message && (
+            <Alert variant="destructive" className="mb-4">
+              <ShieldAlert className="h-4 w-4" />
+              <AlertTitle>Validation Failed</AlertTitle>
+              <AlertDescription>
+                {searchParams.message}
+              </AlertDescription>
+            </Alert>
+          )}
           <form
-            className="flex-1 flex flex-col w-full justify-center gap-2 text-foreground"
+            className="flex-1 flex flex-col w-full justify-center gap-4"
             action={verifyInviteCode}
           >
-            <Label htmlFor="invite-code">Invite Code</Label>
-            <Input
-              id="invite-code"
-              name="code"
-              placeholder="CLANOS-XXXX-XXXX"
-              required
-              className="mb-4"
-            />
-            <Button type="submit">Continue</Button>
-            {searchParams?.message && (
-              <p className="mt-4 p-4 bg-foreground/10 text-foreground text-center">
-                {searchParams.message}
-              </p>
-            )}
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="invite-code">Invite Code</Label>
+              <Input
+                id="invite-code"
+                name="code"
+                placeholder="CLANOS-XXXX-XXXX"
+                required
+                className="text-center tracking-widest font-mono"
+              />
+            </div>
+            <Button type="submit" className="w-full">Verify & Continue</Button>
           </form>
         </CardContent>
       </Card>

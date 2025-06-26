@@ -6,9 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle, PlayCircle } from 'lucide-react';
+import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle, PlayCircle, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 interface InviteCode {
   id: string;
@@ -17,7 +28,6 @@ interface InviteCode {
   used_by: string | null;
   used_by_username: string | null;
   used_at: string | null;
-  is_active: boolean;
   expires_at: string;
 }
 
@@ -69,7 +79,7 @@ export default function AdminInvitesPage() {
   const stats = useMemo(() => {
     const total = inviteCodes.length;
     const used = inviteCodes.filter(code => code.used_by).length;
-    const active = inviteCodes.filter(code => code.is_active && !code.used_by && new Date(code.expires_at) > new Date()).length;
+    const active = inviteCodes.filter(code => !code.used_by && new Date(code.expires_at) > new Date()).length;
     const expired = inviteCodes.filter(code => new Date(code.expires_at) <= new Date() && !code.used_by).length;
     return { total, used, active, expired };
   }, [inviteCodes]);
@@ -91,13 +101,14 @@ export default function AdminInvitesPage() {
 
     const { error } = await supabase
       .from('invite_codes')
-      .insert([{ 
+      .insert({ 
         code, 
         created_by: user.id,
-        expires_at: expiresAt.toISOString() 
-      }]);
+        expires_at: expiresAt.toISOString(),
+      });
 
     if (error) {
+      console.error("Failed to generate code. Full error:", JSON.stringify(error, null, 2));
       toast({ title: 'Error', description: `Failed to generate invite code: ${error.message}`, variant: 'destructive' });
     } else {
       toast({ title: 'Success!', description: `Generated new invite code: ${code}` });
@@ -111,17 +122,27 @@ export default function AdminInvitesPage() {
     toast({ title: 'Copied!', description: 'Invite code copied to clipboard.' });
   }
 
-  const handleToggleActive = async (invite: InviteCode) => {
-    const { error } = await supabase
+  const handleDeleteCode = async (inviteId: string) => {
+    // Optimistic UI update
+    const originalCodes = [...inviteCodes];
+    const updatedCodes = inviteCodes.filter(code => code.id !== inviteId);
+    setInviteCodes(updatedCodes);
+
+    const { error, count } = await supabase
       .from('invite_codes')
-      .update({ is_active: !invite.is_active })
-      .eq('id', invite.id);
+      .delete({ count: 'exact' })
+      .eq('id', inviteId);
 
     if (error) {
-      toast({ title: 'Error', description: 'Failed to update code status.', variant: 'destructive' });
+      console.error("Failed to delete code. Full error:", JSON.stringify(error, null, 2));
+      toast({ title: 'Error', description: `Failed to delete code: ${error.message}`, variant: 'destructive' });
+      setInviteCodes(originalCodes); // Revert on error
+    } else if (count === 0) {
+      console.error("No code was deleted. The code might not exist or RLS is preventing deletion.");
+      toast({ title: 'Deletion Failed', description: `No code was deleted. It may have already been removed.`, variant: 'destructive' });
+      setInviteCodes(originalCodes); // Revert on error
     } else {
-      toast({ title: 'Success!', description: `Code ${invite.code} has been ${!invite.is_active ? 'activated' : 'deactivated'}.` });
-      fetchInviteCodes(); // Refresh list
+      toast({ title: 'Success!', description: `Invite code has been deleted.` });
     }
   }
 
@@ -195,10 +216,8 @@ export default function AdminInvitesPage() {
                                 <Badge variant="secondary" className="flex items-center w-fit"><Users className="w-3 h-3 mr-1.5"/>Used</Badge>
                             ) : new Date(invite.expires_at) < new Date() ? (
                                 <Badge variant="destructive" className="flex items-center w-fit"><XCircle className="w-3 h-3 mr-1.5"/>Expired</Badge>
-                            ) : invite.is_active ? (
-                                <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
                             ) : (
-                                <Badge variant="secondary" className="flex items-center w-fit"><PauseCircle className="w-3 h-3 mr-1.5"/>Inactive</Badge>
+                                <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
                             )}
                         </TableCell>
                         <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
@@ -223,41 +242,39 @@ export default function AdminInvitesPage() {
                             </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-1">
+                          <div className="flex items-center justify-end">
                             <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => handleToggleActive(invite)}
-                                    disabled={!!invite.used_by || new Date(invite.expires_at) < new Date()}
-                                  >
-                                    {invite.is_active ? (
-                                      <PauseCircle className="h-4 w-4" />
-                                    ) : (
-                                      <PlayCircle className="h-4 w-4" />
-                                    )}
-                                    <span className="sr-only">{invite.is_active ? 'Deactivate' : 'Activate'}</span>
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{invite.is_active ? 'Deactivate Code' : 'Activate Code'}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
-                                    <Copy className="h-4 w-4" />
-                                    <span className="sr-only">Copy code</span>
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Copy Code</p>
-                                </TooltipContent>
-                              </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
+                                        <Copy className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent><p>Copy Code</p></TooltipContent>
+                                </Tooltip>
                             </TooltipProvider>
-                          </div>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the invite code.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDeleteCode(invite.id)}>
+                                    Yes, delete it
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                         </TableCell>
                         </TableRow>
                     ))}

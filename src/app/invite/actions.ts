@@ -31,10 +31,6 @@ export async function verifyInviteCode(formData: FormData) {
     return redirect('/invite?message=This invite code has expired.');
   }
 
-  if (!invite.is_active) {
-    return redirect('/invite?message=This invite code is not currently active.');
-  }
-
   // If the code is valid, store it in a cookie and redirect to signup
   cookieStore.set('invite_code', code, {
     path: '/',
