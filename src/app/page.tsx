@@ -120,6 +120,8 @@ export default function Home() {
             <Badge variant="outline" className="text-base sm:text-lg bg-secondary/50 border-landing-green text-landing-green h-fit -mt-2">BETA</Badge>
           </div>
 
+          <p className="text-2xl sm:text-3xl font-medium text-muted-foreground -mt-4 mb-10">The operating system for every clan.</p>
+
           <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 sm:mb-12 leading-relaxed">
             The all-in-one platform for clan management. Coordinate wars, track member performance, and recruit top-tier players with ease. Focus on victory, not on logistics.
           </p>
