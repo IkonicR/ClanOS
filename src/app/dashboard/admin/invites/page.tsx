@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -27,7 +27,7 @@ export default function AdminInvitesPage() {
   const supabase = createClient();
   const { toast } = useToast();
 
-  const fetchInviteCodes = async () => {
+  const fetchInviteCodes = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('invite_codes')
@@ -53,11 +53,11 @@ export default function AdminInvitesPage() {
       setInviteCodes(formattedData);
     }
     setIsLoading(false);
-  };
+  }, [supabase, toast]);
 
   useEffect(() => {
     fetchInviteCodes();
-  }, []);
+  }, [fetchInviteCodes]);
 
   const generateInviteCode = async () => {
     setIsGenerating(true);
@@ -133,7 +133,7 @@ export default function AdminInvitesPage() {
                   </div>
               </div>
               <h3 className="text-xl font-semibold">No Invite Codes Yet</h3>
-              <p className="text-muted-foreground mt-2 mb-6">Click "Generate New Code" to create your first invite.</p>
+              <p className="text-muted-foreground mt-2 mb-6">Click &quot;Generate New Code&quot; to create your first invite.</p>
               <Button onClick={generateInviteCode} disabled={isGenerating}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   {isGenerating ? 'Generating...' : 'Generate Code'}
