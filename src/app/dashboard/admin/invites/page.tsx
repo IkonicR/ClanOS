@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { KeyRound, Copy, PlusCircle } from 'lucide-react';
+import { KeyRound, Copy, PlusCircle, Users, ToggleRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface InviteCode {
   id: string;
@@ -84,12 +87,29 @@ export default function AdminInvitesPage() {
     toast({ title: 'Copied!', description: 'Invite code copied to clipboard.' });
   }
 
+  const handleToggleActive = async (invite: InviteCode) => {
+    const { error } = await supabase
+      .from('invite_codes')
+      .update({ is_active: !invite.is_active })
+      .eq('id', invite.id);
+
+    if (error) {
+      toast({ title: 'Error', description: 'Failed to update code status.', variant: 'destructive' });
+    } else {
+      toast({ title: 'Success!', description: `Code ${invite.code} has been ${!invite.is_active ? 'activated' : 'deactivated'}.` });
+      fetchInviteCodes(); // Refresh list
+    }
+  }
+
   return (
-    <Card>
+    <Card className="border-border/60">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Invite Codes</CardTitle>
-          <CardDescription>Generate and manage invite codes for new users.</CardDescription>
+          <CardTitle className="flex items-center">
+            <KeyRound className="w-6 h-6 mr-3 text-primary"/>
+            Invite Codes
+          </CardTitle>
+          <CardDescription className="pt-2">Generate and manage one-time use invite codes for new users.</CardDescription>
         </div>
         <Button onClick={generateInviteCode} disabled={isGenerating}>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -98,29 +118,75 @@ export default function AdminInvitesPage() {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <p>Loading invite codes...</p>
+          <div className="flex justify-center items-center h-48">
+            <p>Loading invite codes...</p>
+          </div>
+        ) : inviteCodes.length === 0 ? (
+          <div className="text-center py-16 px-6 border-2 border-dashed border-border/50 rounded-lg">
+              <div className="flex justify-center mb-4">
+                  <div className="p-4 bg-secondary rounded-full">
+                      <Users className="w-8 h-8 text-secondary-foreground" />
+                  </div>
+              </div>
+              <h3 className="text-xl font-semibold">No Invite Codes Yet</h3>
+              <p className="text-muted-foreground mt-2 mb-6">Click "Generate New Code" to create your first invite.</p>
+              <Button onClick={generateInviteCode} disabled={isGenerating}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  {isGenerating ? 'Generating...' : 'Generate Code'}
+              </Button>
+          </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Code</TableHead>
-                <TableHead>Created At</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Used By</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Created At</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {inviteCodes.map((invite) => (
-                <TableRow key={invite.id}>
+                <TableRow key={invite.id} className="hover:bg-secondary/50">
                   <TableCell className="font-mono">{invite.code}</TableCell>
-                  <TableCell>{new Date(invite.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>{invite.is_active && !invite.used_by ? 'Active' : 'Used'}</TableCell>
-                  <TableCell>{invite.used_by ?? 'N/A'}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                    {invite.used_by ? (
+                        <Badge variant="secondary">Used</Badge>
+                    ) : invite.is_active ? (
+                        <Badge variant="default" className="bg-green-600/90 text-white">Active</Badge>
+                    ) : (
+                        <Badge variant="destructive">Inactive</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{invite.used_by ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
+                  <TableCell>{new Date(invite.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right space-x-2 flex items-center justify-end">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Switch
+                            checked={invite.is_active}
+                            onCheckedChange={() => handleToggleActive(invite)}
+                            disabled={!!invite.used_by}
+                            aria-label="Toggle code active"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{invite.is_active ? 'Deactivate' : 'Activate'} Code</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                         <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Copy Code</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               ))}
