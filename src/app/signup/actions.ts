@@ -14,6 +14,12 @@ const FormSchema = z.object({
 });
 
 export async function verifyPlayerAccount(prevState: { message: string }, formData: FormData) {
+  console.log("--- Vercel Environment Variables ---");
+  console.log("NEXT_PUBLIC_SUPABASE_URL:", process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'MISSING!');
+  console.log("SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'MISSING!');
+  console.log("CLASH_OF_CLANS_API_TOKEN:", process.env.CLASH_OF_CLANS_API_TOKEN ? 'Set' : 'MISSING!');
+  console.log("--- End Vercel Environment Variables ---");
+
   const validatedFields = FormSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
