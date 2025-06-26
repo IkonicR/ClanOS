@@ -18,6 +18,7 @@ interface InviteCode {
   used_by: string | null;
   used_at: string | null;
   is_active: boolean;
+  expires_at: string;
 }
 
 export default function AdminInvitesPage() {
@@ -37,7 +38,8 @@ export default function AdminInvitesPage() {
         created_at,
         is_active,
         used_at,
-        used_by_profile:profiles(username)
+        expires_at,
+        profiles(username)
       `)
       .order('created_at', { ascending: false });
 
@@ -45,10 +47,9 @@ export default function AdminInvitesPage() {
       toast({ title: 'Error', description: 'Failed to fetch invite codes.', variant: 'destructive' });
       setInviteCodes([]);
     } else {
-      // The type from Supabase is slightly different, so we map it
       const formattedData = data.map((item: any) => ({
         ...item,
-        used_by: item.used_by_profile?.username,
+        used_by: item.profiles?.username,
       }));
       setInviteCodes(formattedData);
     }
@@ -61,7 +62,6 @@ export default function AdminInvitesPage() {
 
   const generateInviteCode = async () => {
     setIsGenerating(true);
-    // In a real app, you might want this on an API route secured for admins only
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -70,15 +70,21 @@ export default function AdminInvitesPage() {
       return;
     }
     
-    // Generate a more readable random code
     const code = `CLANOS-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Codes expire in 7 days
 
     const { error } = await supabase
       .from('invite_codes')
-      .insert([{ code, created_by: user.id }]);
+      .insert([{ 
+        code, 
+        created_by: user.id,
+        expires_at: expiresAt.toISOString() 
+      }]);
 
     if (error) {
-      toast({ title: 'Error', description: 'Failed to generate invite code. Please try again.', variant: 'destructive' });
+      toast({ title: 'Error', description: `Failed to generate invite code: ${error.message}`, variant: 'destructive' });
     } else {
       toast({ title: 'Success!', description: `Generated new invite code: ${code}` });
       await fetchInviteCodes(); // Refresh the list
@@ -147,6 +153,7 @@ export default function AdminInvitesPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Used By</TableHead>
                 <TableHead>Created At</TableHead>
+                <TableHead>Expires At</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -157,6 +164,8 @@ export default function AdminInvitesPage() {
                   <TableCell>
                     {invite.used_by ? (
                         <Badge variant="secondary">Used</Badge>
+                    ) : new Date(invite.expires_at) < new Date() ? (
+                        <Badge variant="destructive">Expired</Badge>
                     ) : invite.is_active ? (
                         <Badge variant="default" className="bg-green-600/90 text-white">Active</Badge>
                     ) : (
@@ -165,6 +174,7 @@ export default function AdminInvitesPage() {
                   </TableCell>
                   <TableCell>{invite.used_by ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
                   <TableCell>{new Date(invite.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(invite.expires_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right space-x-2 flex items-center justify-end">
                     <TooltipProvider>
                       <Tooltip>
@@ -172,7 +182,7 @@ export default function AdminInvitesPage() {
                           <Switch
                             checked={invite.is_active}
                             onCheckedChange={() => handleToggleActive(invite)}
-                            disabled={!!invite.used_by}
+                            disabled={!!invite.used_by || new Date(invite.expires_at) < new Date()}
                             aria-label="Toggle code active"
                           />
                         </TooltipTrigger>
