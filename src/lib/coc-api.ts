@@ -1,4 +1,4 @@
-const COC_API_BASE_URL = 'https://api.clashofclans.com/v1';
+const COC_API_BASE_URL = 'https://cocproxy.royaleapi.dev/v1';
 const CLASH_OF_CLANS_API_TOKEN = process.env.CLASH_OF_CLANS_API_TOKEN;
 
 async function fetchCocApi(path: string) {
