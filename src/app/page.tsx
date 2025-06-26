@@ -1,12 +1,13 @@
 "use client";
 
-import { MoveRight, Shield, Users, Zap } from "lucide-react";
+import { MoveRight, Shield, Users, Zap, MessageSquare, ClipboardEdit, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { Badge } from "@/components/ui/badge";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -102,38 +103,40 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
       </div>
 
-      <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 py-24 text-center">
+      <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 py-24 text-center">
         {/* Hero Section */}
-        <div className="max-w-6xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-6 py-3 mb-8 border border-border">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 sm:px-6 py-3 mb-6 sm:mb-8 border border-border">
             <Shield className="w-4 h-4 text-landing-green" />
-            <span className="text-sm font-medium text-white/80">The future of clan management is here.</span>
+            <span className="text-xs sm:text-sm font-medium text-white/80">Stop managing your clan with spreadsheets.</span>
           </div>
 
-          <h1 className="text-6xl md:text-8xl lg:text-9xl font-black leading-none tracking-tight mb-8">
-            <span className="bg-gradient-to-r from-landing-green to-white bg-clip-text text-transparent">
-              ClanOS
-            </span>
-          </h1>
+          <div className="flex justify-center items-center gap-4 mb-6 sm:mb-8">
+            <h1 className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight">
+              <span className="bg-gradient-to-r from-landing-green to-white bg-clip-text text-transparent">
+                ClanOS
+              </span>
+            </h1>
+            <Badge variant="outline" className="text-base sm:text-lg bg-secondary/50 border-landing-green text-landing-green h-fit -mt-2">BETA</Badge>
+          </div>
 
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
-            The operating system for every clan. Recruit elite members, coordinate epic wars, 
-            and build an unstoppable empire with military precision.
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 sm:mb-12 leading-relaxed">
+            The all-in-one platform for clan management. Coordinate wars, track member performance, and recruit top-tier players with ease. Focus on victory, not on logistics.
           </p>
 
           {/* Feature Pills */}
-          <div className="flex flex-wrap gap-4 justify-center mb-16">
+          <div className="flex flex-wrap gap-3 sm:gap-4 justify-center mb-12 sm:mb-16">
             <div className="flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border">
-              <Users className="w-4 h-4 text-landing-green" />
-              <span className="text-sm text-secondary-foreground">Smart Recruiting</span>
+              <MessageSquare className="w-4 h-4 text-landing-green" />
+              <span className="text-sm text-secondary-foreground">Social Clan Feed</span>
             </div>
             <div className="flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border">
-              <Zap className="w-4 h-4 text-landing-green" />
-              <span className="text-sm text-secondary-foreground">War Analytics</span>
+              <ClipboardEdit className="w-4 h-4 text-landing-green" />
+              <span className="text-sm text-secondary-foreground">War Planning Canvas</span>
             </div>
             <div className="flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 py-2 border border-border">
-              <Shield className="w-4 h-4 text-landing-green" />
-              <span className="text-sm text-secondary-foreground">Member Tracking</span>
+              <TrendingUp className="w-4 h-4 text-landing-green" />
+              <span className="text-sm text-secondary-foreground">Performance Analytics</span>
             </div>
           </div>
 
@@ -141,10 +144,10 @@ export default function Home() {
           <div className="max-w-md mx-auto">
             <div className="bg-secondary/50 backdrop-blur-lg rounded-2xl p-6 border border-border shadow-2xl">
               <h3 className="text-2xl font-bold mb-2 text-foreground">
-                Join the Waitlist
+                Get Early Access
               </h3>
               <p className="text-muted-foreground mb-6 text-sm">
-                Get early access and be the first to know when we launch.
+                Be the first to know when we launch. No spam, we promise.
               </p>
               
               <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -161,7 +164,7 @@ export default function Home() {
                   className="bg-landing-green hover:bg-opacity-90 text-background font-bold px-6 py-2 rounded-md transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-landing-green/10 hover:shadow-landing-green/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Joining...' : 'Get Early Access'}
+                  {isLoading ? 'Joining...' : 'Join Waitlist'}
                   {!isLoading && <MoveRight className="w-4 h-4" />}
                 </button>
               </form>
@@ -170,11 +173,11 @@ export default function Home() {
 
           {/* Social Proof */}
           <div className="mt-16 flex flex-col items-center">
-            <p className="text-muted-foreground/50 text-sm mb-4">Trusted by leaders from top clans worldwide</p>
-            <div className="flex gap-8 opacity-50">
-              <div className="text-2xl font-bold text-muted-foreground">#1 GLOBAL</div>
-              <div className="text-2xl font-bold text-muted-foreground">500K+ MEMBERS</div>
-              <div className="text-2xl font-bold text-muted-foreground">50+ COUNTRIES</div>
+            <p className="text-muted-foreground/50 text-sm mb-4">The ultimate advantage for competitive clans</p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-8 opacity-50">
+              <div className="text-lg sm:text-2xl font-bold text-muted-foreground">#1 IN WAR LOGS</div>
+              <div className="text-lg sm:text-2xl font-bold text-muted-foreground">100% FAIR PLAY</div>
+              <div className="text-lg sm:text-2xl font-bold text-muted-foreground">MAX EFFICIENCY</div>
             </div>
           </div>
         </div>
