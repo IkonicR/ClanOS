@@ -111,8 +111,8 @@ export default function Home() {
           </div>
 
           <h1 className="text-6xl md:text-8xl lg:text-9xl font-black leading-none tracking-tight mb-8">
-            <span className="bg-gradient-to-r from-white to-neutral-400 bg-clip-text text-transparent">
-              Clanos
+            <span className="bg-gradient-to-r from-landing-green to-white bg-clip-text text-transparent">
+              ClanOS
             </span>
           </h1>
 

@@ -4,9 +4,20 @@ import { cookies } from 'next/headers'
 export function createClient() {
   const cookieStore = cookies()
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(`
+      Supabase client creation failed on server.
+      URL Present: ${!!supabaseUrl}
+      Key Present: ${!!supabaseKey}
+    `);
+  }
+
   return createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         get(name: string) {

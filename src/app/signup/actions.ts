@@ -74,40 +74,40 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
         return { message: 'User registration failed. Please try again.' };
       }
       
-      // try {
-      //   // Now that the user and profile have been created (by the trigger),
-      //   // fetch clan info and update the profile.
-      //   const playerInfo = await getPlayerInfo(playerTag);
+      try {
+        // Now that the user and profile have been created (by the trigger),
+        // fetch clan info and update the profile.
+        const playerInfo = await getPlayerInfo(playerTag);
 
-      //   if (playerInfo && playerInfo.clan) {
-      //       // We need to use the service role key to update the profile
-      //       // because the user doesn't have a session yet.
-      //       const supabaseAdmin = createAdminClient(
-      //           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      //           process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      //           { auth: { autoRefreshToken: false, persistSession: false } }
-      //       );
+        if (playerInfo && playerInfo.clan) {
+            // We need to use the service role key to update the profile
+            // because the user doesn't have a session yet.
+            const supabaseAdmin = createAdminClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.SUPABASE_SERVICE_ROLE_KEY!,
+                { auth: { autoRefreshToken: false, persistSession: false } }
+            );
 
-      //       const { error: profileUpdateError } = await supabaseAdmin
-      //           .from('profiles')
-      //           .update({ 
-      //               clan_tag: playerInfo.clan.tag,
-      //               clan_name: playerInfo.clan.name,
-      //               username: playerInfo.name // Also a good idea to set the username
-      //           })
-      //           .eq('id', user.id);
+            const { error: profileUpdateError } = await supabaseAdmin
+                .from('profiles')
+                .update({ 
+                    clan_tag: playerInfo.clan.tag,
+                    clan_name: playerInfo.clan.name,
+                    username: playerInfo.name // Also a good idea to set the username
+                })
+                .eq('id', user.id);
 
-      //       if (profileUpdateError) {
-      //           console.error('Failed to update profile with clan info:', profileUpdateError);
-      //           // The user is created, but their profile is incomplete.
-      //           // This is not ideal, but we can let them proceed.
-      //           // You might want to add a mechanism for them to retry this later.
-      //       }
-      //   }
-      // } catch (apiError) {
-      //     console.error("Could not fetch player info after signup: ", apiError);
-      //     // Non-fatal, user can still login. Profile will be incomplete.
-      // }
+            if (profileUpdateError) {
+                console.error('Failed to update profile with clan info:', profileUpdateError);
+                // The user is created, but their profile is incomplete.
+                // This is not ideal, but we can let them proceed.
+                // You might want to add a mechanism for them to retry this later.
+            }
+        }
+      } catch (apiError) {
+          console.error("Could not fetch player info after signup: ", apiError);
+          // Non-fatal, user can still login. Profile will be incomplete.
+      }
 
       // If there's no error, the user was created.
       // Redirect to the dashboard page.
