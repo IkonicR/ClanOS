@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getPlayerInfo } from '@/lib/coc-api';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 const FormSchema = z.object({
   playerTag: z.string().trim().min(1, { message: 'Player Tag is required.' }),
@@ -55,6 +56,7 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
     if (verificationData.status === 'ok') {
       // Player token is valid, now create user in Supabase
       const supabase = createClient();
+      const cookieStore = cookies();
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email: email,
         password: password,
@@ -107,6 +109,18 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
       } catch (apiError) {
           console.error("Could not fetch player info after signup: ", apiError);
           // Non-fatal, user can still login. Profile will be incomplete.
+      }
+
+      // Invalidate the invite code
+      const inviteCode = cookieStore.get('invite_code')?.value;
+      if (inviteCode) {
+        await supabase
+          .from('invite_codes')
+          .update({ used_by: user.id, used_at: new Date().toISOString() })
+          .eq('code', inviteCode);
+        
+        // Clear the cookie
+        cookieStore.delete('invite_code');
       }
 
       // If there's no error, the user was created.

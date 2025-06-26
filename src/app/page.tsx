@@ -78,14 +78,14 @@ export default function Home() {
                 <Link href="/dashboard">Launch App</Link>
               </Button>
             ) : (
-              <>
-                <Button asChild variant="outline" className="bg-transparent hover:bg-white/10 hover:text-white">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup">Sign Up</Link>
-                </Button>
-              </>
+              <div className="flex gap-4 animate-fade-in">
+                <Link href="/login">
+                  <Button variant="outline" className="text-lg px-6 py-5">Login</Button>
+                </Link>
+                <Link href="/invite">
+                  <Button className="text-lg px-6 py-5">Sign Up</Button>
+                </Link>
+              </div>
             )}
           </>
         )}
