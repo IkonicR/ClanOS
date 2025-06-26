@@ -61,23 +61,27 @@ export default function AdminInvitesPage() {
 
   const generateInviteCode = async () => {
     setIsGenerating(true);
-    // This should be an API route to protect this logic, but for now we'll do it client-side
-    // for simplicity. In a real app, you'd call your own API endpoint here.
+    // In a real app, you might want this on an API route secured for admins only
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+
+    if (!user) {
+      toast({ title: 'Error', description: 'You must be logged in to generate codes.', variant: 'destructive' });
+      setIsGenerating(false);
+      return;
+    }
     
-    // Simple random code generation
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    // Generate a more readable random code
+    const code = `CLANOS-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     const { error } = await supabase
       .from('invite_codes')
       .insert([{ code, created_by: user.id }]);
 
     if (error) {
-      toast({ title: 'Error', description: 'Failed to generate invite code.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to generate invite code. Please try again.', variant: 'destructive' });
     } else {
       toast({ title: 'Success!', description: `Generated new invite code: ${code}` });
-      fetchInviteCodes(); // Refresh the list
+      await fetchInviteCodes(); // Refresh the list
     }
     setIsGenerating(false);
   };
