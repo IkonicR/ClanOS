@@ -17,7 +17,7 @@ import languages from '@/lib/languages.json';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import AdminInvitesPage from '../admin/invites/page';
-import FeatureRequestForm from '@/components/feature-request-form';
+import { FeedbackSettings } from '@/components/feedback-settings';
 
 // Main Settings Page Layout
 const SettingsPage = () => {
@@ -45,7 +45,7 @@ const SettingsPage = () => {
             case 'account':
                 return <AccountSettings />;
             case 'feedback':
-                return <FeatureRequestForm email={profile.email} />;
+                return <FeedbackSettings email={profile.email} />;
             case 'admin':
                 return <AdminInvitesPage />;
             default:

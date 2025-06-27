@@ -9,9 +9,17 @@ import { useToast } from '@/components/ui/use-toast';
 import { ArrowRight, Lightbulb, MessageSquare, Sparkles, TrendingUp } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/card';
 
+interface FeatureRequest {
+    id: number;
+    title: string;
+    description: string;
+    category: string;
+    created_at: string;
+}
+
 interface FeatureRequestFormProps {
   email: string;
-  onSuccess?: () => void;
+  onSuccess?: (newRequest: FeatureRequest) => void;
 }
 
 export default function FeatureRequestForm({ email, onSuccess }: FeatureRequestFormProps) {
@@ -51,7 +59,7 @@ export default function FeatureRequestForm({ email, onSuccess }: FeatureRequestF
       setTitle('');
       setDescription('');
       setCategory('');
-      if(onSuccess) onSuccess();
+      if(onSuccess) onSuccess(data);
 
     } catch (error: any) {
       toast({
