@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createClient } from "@/lib/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -16,6 +17,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const { toast } = useToast();
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     const getSession = async () => {
@@ -53,11 +55,7 @@ export default function Home() {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      toast({
-        title: "Success!",
-        description: data.message,
-      });
-      setEmail('');
+      router.push(`/thanks?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       toast({
         title: 'Uh oh! Something went wrong.',
