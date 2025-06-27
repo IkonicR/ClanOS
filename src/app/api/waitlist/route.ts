@@ -16,17 +16,14 @@ export async function POST(request: Request) {
         // unique_violation for duplicate email
         return NextResponse.json({ message: 'You are already on the waitlist!' }, { status: 200 });
       }
-      console.error('Error inserting into waitlist:', JSON.stringify(error, null, 2));
+      console.error('Error inserting into waitlist. Full error object:', error);
+      console.error('Error stringified:', JSON.stringify(error, null, 2));
       return NextResponse.json({ error: 'Could not join the waitlist. Please try again.' }, { status: 500 });
     }
 
     return NextResponse.json({ message: 'Successfully joined the waitlist!' });
   } catch (error: any) {
-    console.error('An unexpected error occurred in waitlist API:', {
-      message: error.message,
-      stack: error.stack,
-      details: error.details,
-    });
+    console.error('An unexpected error occurred in waitlist API. Full error object:', error);
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
   }
 }
