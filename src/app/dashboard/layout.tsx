@@ -1,5 +1,9 @@
 import { Header } from '@/components/header';
 import React from 'react';
+import { Home, Package2, Users, LineChart, Settings, BotMessageSquare } from 'lucide-react'
+import FriendRequestsDropdown from '@/components/friend-requests-dropdown'
+import { Link } from 'react-router-dom';
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 export default function DashboardLayout({
   children,

@@ -4,17 +4,19 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
 
-    if (!user || !user.email) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+
+    let query = supabase.rpc('get_feature_requests_with_details', { user_id_param: userId });
+
+    if (category) {
+        query = query.eq('category', category);
     }
-    
-    const { data, error } = await supabaseAdmin
-        .from('feature_requests')
-        .select('*')
-        .eq('email', user.email)
-        .order('created_at', { ascending: false });
+
+    const { data, error } = await query;
 
     if (error) {
         console.error('Error fetching feature requests:', error);
@@ -25,27 +27,100 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { title, description, category, email } = await request.json();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!title || !email) {
-    return NextResponse.json({ error: 'Title and email are required' }, { status: 400 });
-  }
+    if (!user || !user.email) {
+        return NextResponse.json({ error: 'Unauthorized or no email provided' }, { status: 401 });
+    }
 
-  try {
+    const { title, description, category } = await request.json();
+
+    if (!title) {
+        return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+
     const { data, error } = await supabaseAdmin
-      .from('feature_requests')
-      .insert([{ title, description, category, email }])
-      .select()
-      .single();
+        .from('feature_requests')
+        .insert({ title, description, category, email: user.email })
+        .select()
+        .single();
 
     if (error) {
-      console.error('Error inserting feature request:', error);
-      return NextResponse.json({ error: 'Could not submit feature request.' }, { status: 500 });
+        console.error('Error creating feature request:', error);
+        return NextResponse.json({ error: 'Could not submit feature request.' }, { status: 500 });
     }
 
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error('An unexpected error occurred in feature-requests API:', error);
-    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
-  }
+}
+
+export async function PUT(request: Request) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id, title, description, category } = await request.json();
+    if (!id) return NextResponse.json({ error: 'ID is required for updating' }, { status: 400 });
+
+    // Verify the user owns this request before updating
+    const { data: existing, error: fetchError } = await supabaseAdmin
+        .from('feature_requests')
+        .select('id, email')
+        .eq('id', id)
+        .single();
+    
+    if (fetchError || !existing) {
+        return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+    if (existing.email !== user.email) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { data, error } = await supabaseAdmin
+        .from('feature_requests')
+        .update({ title, description, category, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error updating feature request:', error);
+        return NextResponse.json({ error: 'Could not update feature request.' }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+}
+
+export async function DELETE(request: Request) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id } = await request.json();
+    if (!id) return NextResponse.json({ error: 'Request ID is required' }, { status: 400 });
+
+    // Verify the user owns this request before deleting
+    const { data: existing, error: fetchError } = await supabaseAdmin
+        .from('feature_requests')
+        .select('id, email')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !existing) {
+        return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+    if (existing.email !== user.email) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    
+    const { error } = await supabaseAdmin.from('feature_requests').delete().eq('id', id);
+
+    if (error) {
+        console.error('Error deleting feature request:', error);
+        return NextResponse.json({ error: 'Could not delete feature request.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Request deleted successfully.' });
 } 

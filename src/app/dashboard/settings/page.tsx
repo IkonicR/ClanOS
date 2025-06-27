@@ -17,12 +17,19 @@ import languages from '@/lib/languages.json';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import AdminInvitesPage from '../admin/invites/page';
-import { FeedbackSettings } from '@/components/feedback-settings';
+// import { FeedbackSettings } from '@/components/feedback-settings';
 
 // Main Settings Page Layout
 const SettingsPage = () => {
     const [activeTab, setActiveTab] = useState('profile');
     const { profile, loading, error } = useProfile();
+
+    useEffect(() => {
+        const hash = window.location.hash;
+        if (hash === '#submit-idea') {
+            setActiveTab('feedback');
+        }
+    }, []);
 
     const renderContent = () => {
         if (loading) {
@@ -44,8 +51,6 @@ const SettingsPage = () => {
                 return <NotificationSettings />;
             case 'account':
                 return <AccountSettings />;
-            case 'feedback':
-                return <FeedbackSettings email={profile.email} />;
             case 'admin':
                 return <AdminInvitesPage />;
             default:
@@ -82,13 +87,6 @@ const SettingsPage = () => {
                         id="account"
                         icon={<Key className="w-5 h-5" />}
                         label="Account & Security"
-                        activeTab={activeTab}
-                        onClick={setActiveTab}
-                    />
-                    <SettingsTab
-                        id="feedback"
-                        icon={<MessageSquare className="w-5 h-5" />}
-                        label="Feedback"
                         activeTab={activeTab}
                         onClick={setActiveTab}
                     />
