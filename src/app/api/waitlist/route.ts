@@ -9,7 +9,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { error } = await supabaseAdmin.from('waitlist').insert([{ email }]);
+    const { data, error } = await supabaseAdmin.from('waitlist').insert([{ email }]);
+    console.log('Supabase response:', { data, error });
 
     if (error) {
       if (error.code === '23505') {
