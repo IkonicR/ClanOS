@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, useCallback } from 'react';
 import { useUser } from '@/lib/hooks/useUser';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,14 +30,14 @@ interface FeatureRequest {
     description: string;
 }
 
-export default function FeedbackDetail({ params, onCommentAdded }: { params: { id: string }, onCommentAdded?: () => void }) {
+export default function FeedbackDetail({ params }: { params: { id: string } }) {
     const [request, setRequest] = useState<RequestDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { user } = useUser();
 
-    const fetchRequestDetails = async () => {
+    const fetchRequestDetails = useCallback(async () => {
         // Don't set loading to true here to prevent flicker on re-fetch
         try {
             const res = await fetch(`/api/feature-requests/${params.id}`);
@@ -49,14 +49,14 @@ export default function FeedbackDetail({ params, onCommentAdded }: { params: { i
         } finally {
             setLoading(false);
         }
-    };
+    }, [params.id]);
 
     useEffect(() => {
         if (params.id) {
             setLoading(true);
             fetchRequestDetails();
         }
-    }, [params.id]);
+    }, [params.id, fetchRequestDetails]);
 
     const handleCommentSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -84,9 +84,6 @@ export default function FeedbackDetail({ params, onCommentAdded }: { params: { i
             });
             if (!res.ok) throw new Error('Failed to post comment');
             
-            // Trigger the callback to update the parent's state
-            onCommentAdded?.();
-
             // Re-fetch to get the real data, which will replace the optimistic comment
             await fetchRequestDetails(); 
         } catch (error) {
