@@ -6,7 +6,7 @@ const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 console.log(
   'Supabase admin client initializing...',
   {
-    url_present: !!supabaseUrl,
+    url: supabaseUrl,
     key_present: !!supabaseServiceRoleKey,
     key_length: supabaseServiceRoleKey?.length
   }

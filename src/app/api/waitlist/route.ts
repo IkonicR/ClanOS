@@ -9,8 +9,16 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Diagnostic Step 1: Try to read from the table first.
+    const { error: selectError } = await supabaseAdmin.from('waitlist').select('email').limit(1);
+
+    if (selectError && selectError.message) {
+      console.error('Error reading from waitlist table:', selectError);
+      return NextResponse.json({ error: `A server error occurred: Could not read from table. Hint: ${selectError.message}` }, { status: 500 });
+    }
+
     const { data, error } = await supabaseAdmin.from('waitlist').insert([{ email }]);
-    console.log('Supabase response:', { data, error });
+    console.log('Supabase insert response:', { data, error });
 
     if (error) {
       if (error.code === '23505') {
