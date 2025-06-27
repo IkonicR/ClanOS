@@ -13,7 +13,7 @@ function ThanksContent() {
     return (
         <div className="max-w-2xl w-full mx-auto text-center">
             <h1 className="text-5xl md:text-6xl font-black tracking-tight">Thank You!</h1>
-            <p className="text-xl text-muted-foreground mt-4">We've received your submission.</p>
+            <p className="text-xl text-muted-foreground mt-4">We&apos;ve received your submission.</p>
         </div>
     );
   }
