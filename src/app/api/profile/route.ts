@@ -9,7 +9,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data, error } = await supabase
+    const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
@@ -20,7 +20,13 @@ export async function GET() {
         return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 });
     }
 
-    return NextResponse.json(data);
+    // Combine profile data with user's email
+    const responseData = {
+        ...profile,
+        email: user.email,
+    };
+
+    return NextResponse.json(responseData);
 }
 
 export async function POST(request: Request) {

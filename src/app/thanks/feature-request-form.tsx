@@ -87,7 +87,7 @@ export default function FeatureRequestForm() {
           You&apos;re on the list!
         </h1>
         <p className="text-xl text-muted-foreground mt-4 max-w-lg mx-auto">
-          Thank you for joining. While you wait, tell us what you want to see. Your feedback will shape the future of ClanOS.
+          We&apos;ll email you an invite as soon as a spot opens up. While you wait, tell us what you want to see. Your feedback will shape the future of ClanOS.
         </p>
 
         <div className="mt-12 bg-secondary/30 backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl text-left">
@@ -150,12 +150,6 @@ export default function FeatureRequestForm() {
           </form>
         </div>
         
-        <div className="mt-8">
-            <Button variant="link" onClick={() => router.push('/dashboard')}>
-                Skip and go to the app &rarr;
-            </Button>
-        </div>
-
       </div>
     </div>
   );

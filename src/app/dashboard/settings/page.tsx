@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader, User, Palette, Key, LogOut, Shield, Trophy, Gamepad2, Paintbrush, Twitter, Youtube, Bell, Sun, Moon, Laptop } from 'lucide-react';
+import { Loader, User, Palette, Key, LogOut, Shield, Trophy, Gamepad2, Paintbrush, Twitter, Youtube, Bell, Sun, Moon, Laptop, MessageSquare } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import Select from "react-tailwindcss-select";
 import type { Option } from "react-tailwindcss-select/dist/components/type";
@@ -17,6 +17,7 @@ import languages from '@/lib/languages.json';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import AdminInvitesPage from '../admin/invites/page';
+import FeatureRequestForm from '@/components/feature-request-form';
 
 // Main Settings Page Layout
 const SettingsPage = () => {
@@ -43,6 +44,8 @@ const SettingsPage = () => {
                 return <NotificationSettings />;
             case 'account':
                 return <AccountSettings />;
+            case 'feedback':
+                return <FeatureRequestForm email={profile.email} />;
             case 'admin':
                 return <AdminInvitesPage />;
             default:
@@ -79,6 +82,13 @@ const SettingsPage = () => {
                         id="account"
                         icon={<Key className="w-5 h-5" />}
                         label="Account & Security"
+                        activeTab={activeTab}
+                        onClick={setActiveTab}
+                    />
+                    <SettingsTab
+                        id="feedback"
+                        icon={<MessageSquare className="w-5 h-5" />}
+                        label="Feedback"
                         activeTab={activeTab}
                         onClick={setActiveTab}
                     />
@@ -125,6 +135,7 @@ interface ProfileData {
     bio: string;
     avatar_url: string;
     birthday?: string;
+    email: string;
     social_links?: {
         discord?: string;
         twitter?: string;
