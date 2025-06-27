@@ -109,7 +109,7 @@ export default function Home() {
           <div>
             <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 sm:px-6 py-3 mb-4 border border-border">
               <Zap className="w-4 h-4 text-landing-green" />
-              <span className="text-xs sm:text-sm font-medium text-white/80">Unleash Your Clan's Potential.</span>
+              <span className="text-xs sm:text-sm font-medium text-white/80">Unleash Your Clan&apos;s Potential.</span>
             </div>
           </div>
           
