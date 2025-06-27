@@ -1,6 +1,5 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export async function POST(request: Request) {
   const { email } = await request.json();
@@ -9,23 +8,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 });
   }
 
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
-  }
+  try {
+    const { error } = await supabaseAdmin.from('waitlist').insert([{ email }]);
 
-  const supabase = createRouteHandlerClient({ cookies });
-
-  const { error } = await supabase.from('waitlist').insert([{ email }]);
-
-  if (error) {
-    console.error('Error inserting into waitlist:', error);
-    if (error.code === '23505') { // unique_violation for duplicate email
-      return NextResponse.json({ message: 'You are already on the waitlist!' }, { status: 200 });
+    if (error) {
+      if (error.code === '23505') {
+        // unique_violation for duplicate email
+        return NextResponse.json({ message: 'You are already on the waitlist!' }, { status: 200 });
+      }
+      console.error('Error inserting into waitlist:', JSON.stringify(error, null, 2));
+      return NextResponse.json({ error: 'Could not join the waitlist. Please try again.' }, { status: 500 });
     }
-    return NextResponse.json({ error: 'An error occurred. Please try again.' }, { status: 500 });
-  }
 
-  return NextResponse.json({ message: 'Success! You have been added to the waitlist.' }, { status: 200 });
-} 
+    return NextResponse.json({ message: 'Successfully joined the waitlist!' });
+  } catch (error: any) {
+    console.error('An unexpected error occurred in waitlist API:', {
+      message: error.message,
+      stack: error.stack,
+      details: error.details,
+    });
+    return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+  }
+}

@@ -106,21 +106,20 @@ export default function Home() {
       <main className="relative z-10 flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 py-24 text-center">
         {/* Hero Section */}
         <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 sm:px-6 py-3 mb-6 sm:mb-8 border border-border">
-            <Shield className="w-4 h-4 text-landing-green" />
-            <span className="text-xs sm:text-sm font-medium text-white/80">Stop managing your clan with spreadsheets.</span>
+          <div>
+            <div className="inline-flex items-center gap-2 bg-secondary/50 backdrop-blur-sm rounded-full px-4 sm:px-6 py-3 mb-4 border border-border">
+              <Zap className="w-4 h-4 text-landing-green" />
+              <span className="text-xs sm:text-sm font-medium text-white/80">Unleash Your Clan's Potential.</span>
+            </div>
           </div>
-
-          <div className="flex justify-center items-center gap-4 mb-6 sm:mb-8">
-            <h1 className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight">
-              <span className="bg-gradient-to-r from-landing-green to-white bg-clip-text text-transparent">
-                ClanOS
-              </span>
-            </h1>
-            <Badge variant="outline" className="text-base sm:text-lg bg-secondary/50 border-landing-green text-landing-green h-fit -mt-2">BETA</Badge>
-          </div>
-
-          <p className="text-2xl sm:text-3xl font-medium text-muted-foreground -mt-4 mb-10">The operating system for every clan.</p>
+          
+          <Badge variant="outline" className="text-base sm:text-lg bg-secondary/50 border-landing-green text-landing-green mb-4">BETA</Badge>
+          <h1 className="text-5xl sm:text-6xl md:text-8xl font-black leading-none tracking-tight">
+            <span className="bg-gradient-to-r from-landing-green to-white bg-clip-text text-transparent">
+              ClanOS
+            </span>
+          </h1>
+          <p className="text-2xl sm:text-3xl font-medium text-muted-foreground mt-4 mb-10">The operating system for every clan.</p>
 
           <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 sm:mb-12 leading-relaxed">
             The all-in-one platform for clan management. Coordinate wars, track member performance, and recruit top-tier players with ease. Focus on victory, not on logistics.
