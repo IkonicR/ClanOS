@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { RoomProvider, ClientSideSuspense } from '@liveblocks/react/suspense';
 import 'tldraw/tldraw.css';
 import { useProfile } from '@/lib/hooks/useProfile';
-import { Tldraw, TLOnMountHandler, TLUiOverrides } from 'tldraw';
+import { Tldraw, TLOnMountHandler, TLUiOverrides, DefaultSizeStyle } from 'tldraw';
 import { Button } from '@/components/ui/button';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { RotatePrompt } from '@/components/rotate-prompt';
@@ -93,6 +93,17 @@ export function WarRoomClient() {
   const { profile, loading: profileLoading } = useProfile();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   
+  useEffect(() => {
+    // Set the default size for tldraw shapes based on screen size
+    if (isDesktop) {
+      DefaultSizeStyle.setDefaultValue('m');
+    } else {
+      DefaultSizeStyle.setDefaultValue('xl');
+    }
+    // Revert to default when component unmounts
+    return () => DefaultSizeStyle.setDefaultValue('m');
+  }, [isDesktop]);
+
   useEffect(() => {
     async function fetchWarData() {
       try {
