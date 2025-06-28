@@ -24,6 +24,12 @@ const nextConfig = {
         port: '',
         pathname: '/leagues/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'jejzszvdpemiwmektmek.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      }
     ],
   },
 };

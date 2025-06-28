@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, Swords, Settings as SettingsIcon, Shield, MessageSquare, LogOut } from 'lucide-react';
+import { Menu, Swords, Settings as SettingsIcon, Shield, MessageSquare, LogOut, User as UserIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FriendRequestsDropdown } from './friend-requests-dropdown';
 import { Profile } from '@/lib/types';
@@ -160,7 +160,7 @@ export function Header() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                                 <Avatar className="h-9 w-9 border-2 border-transparent hover:border-primary/50 transition-colors">
-                                    <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.name ?? 'User'} />
+                                    <AvatarImage src={profile?.avatar_url ?? undefined} alt={user.user_metadata.name ?? 'User'} />
                                     <AvatarFallback>{getInitials(user.user_metadata.name)}</AvatarFallback>
                                 </Avatar>
                                 </Button>
@@ -173,6 +173,12 @@ export function Header() {
                                 </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                    <Link href={`/dashboard/members/${profile?.player_tag?.replace('#', '%23')}`} className="flex items-center cursor-pointer">
+                                        <UserIcon className="w-4 h-4 mr-2" />
+                                        <span>My Profile</span>
+                                    </Link>
+                                </DropdownMenuItem>
                                 {profile?.role === 'admin' && (
                                     <DropdownMenuItem asChild>
                                         <Link href="/dashboard/admin/invites" className="flex items-center cursor-pointer">

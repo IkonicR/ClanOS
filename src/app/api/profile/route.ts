@@ -61,19 +61,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { location, languages, username, bio, birthday, social_links } = await request.json();
+    const { bio, social_links } = await request.json();
+
+    const updateData: { bio?: string, social_links?: any, updated_at: string } = {
+        updated_at: new Date().toISOString(),
+    };
+
+    if (bio !== undefined) {
+        updateData.bio = bio;
+    }
+
+    if (social_links !== undefined) {
+        updateData.social_links = social_links;
+    }
 
     const { data, error } = await supabase
         .from('profiles')
-        .update({
-            location,
-            languages,
-            username,
-            bio,
-            birthday,
-            social_links,
-            updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', user.id)
         .select()
         .single();

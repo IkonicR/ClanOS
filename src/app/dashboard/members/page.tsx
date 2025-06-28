@@ -139,27 +139,25 @@ const MemberCard = ({ member, onUpdate }: { member: MemberWithFriendship, onUpda
                         className="w-16 h-16"
                     />
                     <div className="flex-grow">
-                        <div className='flex justify-between items-start'>
-                             <div>
-                                <Link href={`/dashboard/members/${encodeURIComponent(member.tag)}`}>
-                                    <h3 className="text-lg font-bold text-white/90 hover:text-primary transition-colors">{member.name}</h3>
-                                </Link>
-                                <p className="text-sm text-muted-foreground">{member.tag}</p>
-                            </div>
-                            <Badge variant={getRoleBadgeVariant(member.role)} className="ml-2 whitespace-nowrap">{formatRole(member.role)}</Badge>
+                        <div className='flex justify-between items-start mb-2'>
+                             <Link href={`/dashboard/members/${encodeURIComponent(member.tag)}`} className="group flex-grow">
+                                <h3 className="text-lg font-bold text-white/90 group-hover:text-primary transition-colors">{member.name}</h3>
+                                <p className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">{member.tag}</p>
+                            </Link>
+                            <Badge variant={getRoleBadgeVariant(member.role)} className="ml-2 whitespace-nowrap self-start">{formatRole(member.role)}</Badge>
                         </div>
                        
-                        <div className="flex items-center space-x-4 mt-3">
+                        <div className="flex items-center space-x-4">
                             <div className="flex items-center text-sm">
                                 <Image src={member.league.iconUrls.tiny} alt={member.league.name} width={24} height={24} className="mr-1" />
                                 {member.trophies}
                             </div>
                             <div className="flex items-center text-sm" title="Donations">
-                                <ArrowUp className="h-4 w-4 text-green-500 mr-1" />
+                                <ArrowUp className="h-4 w-4 text-success mr-1" />
                                 {member.donations}
                             </div>
                              <div className="flex items-center text-sm" title="Donations Received">
-                                <ArrowDown className="h-4 w-4 text-red-500 mr-1" />
+                                <ArrowDown className="h-4 w-4 text-destructive mr-1" />
                                 {member.donationsReceived}
                             </div>
                         </div>

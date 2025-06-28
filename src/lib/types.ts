@@ -66,6 +66,8 @@ export interface Profile {
     bio: string | null;
     player_tag: string | null;
     clan_tag: string | null;
+    banner_url: string | null;
+    social_links: { [key: string]: string } | null;
     role: 'admin' | 'user' | null;
     languages: string[] | null;
 }

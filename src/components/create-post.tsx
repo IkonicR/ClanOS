@@ -6,7 +6,7 @@ import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { Post } from '@/lib/types';
+import { Post, Profile } from '@/lib/types';
 
 interface CreatePostProps {
     onCreatePost: (post: Post) => void;
@@ -15,15 +15,25 @@ interface CreatePostProps {
 const CreatePost = ({ onCreatePost }: CreatePostProps) => {
     const [content, setContent] = useState('');
     const [user, setUser] = useState<User | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
     const supabase = createClient();
 
     useEffect(() => {
-        const fetchUser = async () => {
-            const { data } = await supabase.auth.getUser();
-            setUser(data.user);
+        const fetchUserAndProfile = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+
+            if (user) {
+                const { data: profileData } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                setProfile(profileData);
+            }
         };
-        fetchUser();
-    }, [supabase.auth]);
+        fetchUserAndProfile();
+    }, [supabase]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,8 +59,8 @@ const CreatePost = ({ onCreatePost }: CreatePostProps) => {
     return (
         <div className="flex items-start gap-4 p-4 border rounded-lg">
             <Avatar>
-                <AvatarImage src={user?.user_metadata.avatar_url} />
-                <AvatarFallback>{user?.user_metadata.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                <AvatarImage src={profile?.avatar_url ?? undefined} />
+                <AvatarFallback>{profile?.username?.charAt(0) ?? 'U'}</AvatarFallback>
             </Avatar>
             <form onSubmit={handleSubmit} className="w-full space-y-2">
                 <Textarea

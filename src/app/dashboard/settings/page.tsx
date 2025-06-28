@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, ChangeEvent } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,213 @@ import AdminInvitesPage from '../admin/invites/page';
 import { FeedbackSettings } from '@/components/feedback-settings';
 import { LinkClanCard } from '@/components/link-clan-card';
 import { useProfile } from '@/lib/hooks/useProfile';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
+function getCroppedImg(
+  image: HTMLImageElement,
+  crop: Crop,
+  fileName: string
+): Promise<File> {
+  const canvas = document.createElement('canvas');
+  const scaleX = image.naturalWidth / image.width;
+  const scaleY = image.naturalHeight / image.height;
+  canvas.width = crop.width;
+  canvas.height = crop.height;
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) {
+    return Promise.reject(new Error('Failed to get 2d context'));
+  }
+
+  const pixelRatio = window.devicePixelRatio || 1;
+  canvas.width = crop.width * pixelRatio;
+  canvas.height = crop.height * pixelRatio;
+  ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+  ctx.imageSmoothingQuality = 'high';
+
+  ctx.drawImage(
+    image,
+    crop.x * scaleX,
+    crop.y * scaleY,
+    crop.width * scaleX,
+    crop.height * scaleY,
+    0,
+    0,
+    crop.width,
+    crop.height
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          reject(new Error('Canvas is empty'));
+          return;
+        }
+        resolve(new File([blob], fileName, { type: 'image/png' }));
+      },
+      'image/png',
+      1
+    );
+  });
+}
+
+// Reusable component for avatar uploads
+const AvatarUpload = ({ url, onUpload, onRemove }: { url: string | null, onUpload: (file: File) => void, onRemove: () => void }) => {
+    const [uploading, setUploading] = useState(false);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<Crop>();
+    const imgRef = useRef<HTMLImageElement | null>(null);
+    const [originalFileName, setOriginalFileName] = useState('');
+    const [dialogTitle, setDialogTitle] = useState('Upload a new picture');
+
+    const inputFileRef = React.useRef<HTMLInputElement | null>(null);
+
+    const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setDialogTitle('Edit Profile Picture');
+            setOriginalFileName(file.name);
+            const reader = new FileReader();
+            reader.addEventListener('load', () => {
+                setSelectedImage(reader.result as string);
+                setDialogOpen(true);
+            });
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleRepositionClick = () => {
+        if (url) {
+            setDialogTitle('Reposition Profile Picture');
+            setOriginalFileName(url.substring(url.lastIndexOf('/') + 1) || 'avatar.png');
+            setSelectedImage(url);
+            setDialogOpen(true);
+        }
+    };
+
+    const handleSaveCrop = async () => {
+        if (imgRef.current && crop?.width && crop?.height) {
+            setUploading(true);
+            setDialogOpen(false);
+            try {
+                const croppedImageFile = await getCroppedImg(
+                    imgRef.current,
+                    crop,
+                    originalFileName
+                );
+                await onUpload(croppedImageFile);
+            } catch (error) {
+                console.error("Upload failed", error);
+            } finally {
+                setUploading(false);
+                setSelectedImage(null);
+                setCrop(undefined);
+                if (inputFileRef.current) {
+                    inputFileRef.current.value = '';
+                }
+            }
+        }
+    };
+    
+    const handleRemoveClick = async () => {
+        setUploading(true);
+        try {
+            await onRemove();
+        } catch (error) {
+            console.error("Remove failed", error);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleAvatarClick = () => {
+        inputFileRef.current?.click();
+    };
+
+    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+        const { width, height } = e.currentTarget;
+        const newCrop = centerCrop(
+            makeAspectCrop({ unit: '%', width: 90 }, 1, width, height),
+            width,
+            height
+        );
+        setCrop(newCrop);
+    }
+    
+    return (
+        <>
+            <div className="flex items-center gap-6">
+                <Avatar className="h-24 w-24 cursor-pointer" onClick={handleAvatarClick}>
+                    <AvatarImage src={url ?? undefined} className="object-cover" />
+                    <AvatarFallback>
+                        <User className="h-12 w-12" />
+                    </AvatarFallback>
+                </Avatar>
+                <input
+                    type="file"
+                    ref={inputFileRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/png, image/jpeg"
+                    disabled={uploading}
+                />
+                <div className="flex flex-col items-start gap-2">
+                    <Button onClick={handleAvatarClick} disabled={uploading} variant="outline">
+                        {uploading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <User className="mr-2 h-4 w-4" />}
+                        {uploading ? 'Uploading...' : 'Change Picture'}
+                    </Button>
+                    {url && (
+                        <div className='flex items-center gap-2'>
+                        <Button onClick={handleRepositionClick} disabled={uploading} variant="outline" size="sm">
+                            Reposition
+                        </Button>
+                        <Button onClick={handleRemoveClick} disabled={uploading} variant="ghost" className="text-destructive hover:text-destructive" size="sm">
+                            Remove
+                        </Button>
+                        </div>
+                    )}
+                </div>
+            </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{dialogTitle}</DialogTitle>
+                    </DialogHeader>
+                    {selectedImage && (
+                        <ReactCrop
+                            crop={crop}
+                            onChange={c => setCrop(c)}
+                            onComplete={c => setCompletedCrop(c)}
+                            aspect={1}
+                            circularCrop
+                        >
+                            <img ref={imgRef} src={selectedImage} onLoad={onImageLoad} alt="Crop preview" crossOrigin="anonymous"/>
+                        </ReactCrop>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveCrop} disabled={uploading}>
+                            {uploading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            Save
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
+};
 
 // Main Settings Page Layout
 const SettingsPage = () => {
@@ -103,7 +310,59 @@ const ProfileSettings = ({ initialProfile, onUpdate }: { initialProfile: any, on
     const { register, handleSubmit, control, formState: { isSubmitting } } = useForm({
         defaultValues: initialProfile,
     });
+    const { toast } = useToast();
     
+    const handleAvatarUpload = async (file: File) => {
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const res = await fetch('/api/profile/avatar-upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to upload avatar');
+            }
+            toast({
+                title: 'Success!',
+                description: 'Your avatar has been updated.',
+            });
+            onUpdate();
+        } catch (error: any) {
+            toast({
+                title: 'Upload Failed',
+                description: error.message || 'An unexpected error occurred.',
+                variant: 'destructive',
+            });
+        }
+    };
+
+    const handleRemoveAvatar = async () => {
+        try {
+            const res = await fetch('/api/profile/avatar-upload', {
+                method: 'DELETE',
+            });
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to remove avatar');
+            }
+            toast({
+                title: 'Success!',
+                description: 'Your avatar has been removed.',
+            });
+            onUpdate();
+        } catch (error: any) {
+             toast({
+                title: 'Removal Failed',
+                description: error.message || 'An unexpected error occurred.',
+                variant: 'destructive',
+            });
+        }
+    };
+
     const onSubmit = async (formData: any) => {
         try {
             const res = await fetch('/api/profile', {
@@ -120,6 +379,15 @@ const ProfileSettings = ({ initialProfile, onUpdate }: { initialProfile: any, on
 
     return (
         <div className="space-y-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Your Profile Picture</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <AvatarUpload url={initialProfile.avatar_url} onUpload={handleAvatarUpload} onRemove={handleRemoveAvatar} />
+                </CardContent>
+            </Card>
+
             <GameProfile profile={initialProfile} />
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Card>
