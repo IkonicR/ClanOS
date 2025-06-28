@@ -5,13 +5,13 @@ import { Swords, Star, Target, Clock, ArrowLeft } from 'lucide-react';
 import { War, WarMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { RoomProvider, ClientSideSuspense } from '@liveblocks/react/suspense';
 import 'tldraw/tldraw.css';
 import { useProfile } from '@/lib/hooks/useProfile';
-import { Tldraw, TLOnMountHandler, TLUiOverrides, DefaultSizeStyle } from 'tldraw';
+import { DefaultSizeStyle } from 'tldraw';
 import { Button } from '@/components/ui/button';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { RotatePrompt } from '@/components/rotate-prompt';
+import { PlanningCanvas } from '@/components/planning-canvas';
 
 // Helper function to parse CoC API date strings
 function parseCocDate(dateString: string): Date {
@@ -65,26 +65,6 @@ const Countdown = ({ endTime, title, isProminent, colorClass = 'text-destructive
 
 type WarData = War;
 
-function PlanningCanvas({ war, selectedBase, isReadOnly }: { war: WarData, selectedBase: WarMember, isReadOnly: boolean }) {
-    const roomId = `coc-war-room-${war.startTime}-${selectedBase.tag}`;
-
-    const handleMount: TLOnMountHandler = (editor) => {
-        editor.updateInstanceState({ isReadonly: isReadOnly });
-    };
-
-    return (
-        <div className="w-full h-full relative">
-            <RoomProvider id={roomId} initialPresence={{}}>
-                <ClientSideSuspense fallback={<div className="flex items-center justify-center h-full text-foreground">Loading planning canvas...</div>}>
-                    {() => (
-                        <Tldraw persistenceKey={roomId} onMount={handleMount} />
-                    )}
-                </ClientSideSuspense>
-            </RoomProvider>
-        </div>
-    );
-}
-
 export function WarRoomClient() {
   const [war, setWar] = useState<WarData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +72,7 @@ export function WarRoomClient() {
   const [selectedBase, setSelectedBase] = useState<WarMember | null>(null);
   const { profile, loading: profileLoading } = useProfile();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isLandscape = useMediaQuery("(orientation: landscape)");
   
   useEffect(() => {
     // Set the default size for tldraw shapes based on screen size
@@ -103,6 +84,22 @@ export function WarRoomClient() {
     // Revert to default when component unmounts
     return () => DefaultSizeStyle.setDefaultValue('m');
   }, [isDesktop]);
+
+  const handleBaseSelect = (member: WarMember) => {
+    if (!isDesktop) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+      });
+    }
+    setSelectedBase(member);
+  };
+
+  const handleExitCanvas = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+    setSelectedBase(null);
+  };
 
   useEffect(() => {
     async function fetchWarData() {
@@ -200,7 +197,7 @@ export function WarRoomClient() {
         {opponent.members.map((member) => (
           <div
             key={member.tag}
-            onClick={() => setSelectedBase(member)}
+            onClick={() => handleBaseSelect(member)}
             className={cn(
               "bg-card/75 p-3 rounded-lg border border-border cursor-pointer transition-all hover:border-primary/50",
               selectedBase?.tag === member.tag && "border-primary ring-2 ring-primary"
@@ -222,9 +219,9 @@ export function WarRoomClient() {
   );
 
   const planningView = (
-    <div className="flex-grow bg-background/20 relative h-full">
+    <div className="flex-1 bg-background/20 relative">
       {selectedBase && war ? (
-        <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={!isPlanner} />
+          <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={!isPlanner} />
       ) : (
         <div className="hidden lg:flex items-center justify-center h-full">
           <div className="text-center">
@@ -236,76 +233,81 @@ export function WarRoomClient() {
     </div>
   );
 
+  // On desktop, we always show the main layout with the base list and the planning view area.
   if (isDesktop) {
-      return (
-          <div className="flex flex-col h-full max-h-[calc(100vh-80px)]">
-              {topStrip}
-              <div className="flex flex-row flex-grow min-h-0">
-                  {baseList}
-                  {planningView}
-              </div>
-          </div>
-      );
+    return (
+      <div className="flex flex-col h-full max-h-[calc(100vh-80px)]">
+        {topStrip}
+        <div className="flex flex-row flex-grow min-h-0">
+          {baseList}
+          {planningView}
+        </div>
+      </div>
+    );
   }
 
-  // Mobile View
-  return (
-    <>
-      {!selectedBase ? (
-        <div className="flex flex-col h-full">
-          {topStrip}
-          {baseList}
+  // On mobile, the view depends on whether a base is selected.
+  if (!isDesktop) {
+    // If a base is selected, show the fullscreen canvas.
+    if (selectedBase) {
+      return (
+        <div className="fixed inset-0 bg-background z-50">
+          <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={!isPlanner} />
+          <RotatePrompt onBack={handleExitCanvas} />
+          {isLandscape && (
+            <Button 
+              onClick={handleExitCanvas} 
+              className="absolute bottom-5 right-5 z-[1000] bg-primary hover:bg-primary/80"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Bases
+            </Button>
+          )}
         </div>
-      ) : (
-        <div className="fixed inset-0 z-40 bg-background">
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedBase(null)}
-            className="absolute bottom-16 right-4 z-[998] rounded-full bg-background/80 hover:bg-background"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Bases
-          </Button>
-          <div className="h-full w-full">
-            <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={!isPlanner} />
-          </div>
-          <RotatePrompt onBack={() => setSelectedBase(null)} />
-        </div>
-      )}
-    </>
-  );
+      );
+    }
+
+    // If no base is selected on mobile, show the top strip and the base list.
+    return (
+      <div className="flex flex-col h-full">
+        {topStrip}
+        {baseList}
+      </div>
+    );
+  }
+
+  // Fallback just in case, should not be reached.
+  return null;
 }
 
 function WarRoomSkeleton() {
     return (
-        <div className="flex flex-col h-full max-h-[calc(100vh-80px)]">
-            <div className="flex-shrink-0 bg-card/75 backdrop-blur-lg border-b border-border rounded-t-xl p-4 flex justify-between items-center">
-                <div className="flex items-center gap-6">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-6 w-48" />
+        <div className="flex flex-col h-full bg-card rounded-xl border border-border overflow-hidden">
+            <div className="flex-shrink-0 bg-card/75 backdrop-blur-lg border-b border-border p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                    <Skeleton className="h-12 w-32" />
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-8 w-32" />
                 </div>
                 <div className="flex items-center gap-4">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-8 w-16" />
+                    <Skeleton className="h-8 w-16" />
                 </div>
             </div>
-            <div className="flex flex-grow min-h-0">
-                <div className="w-1/4 bg-background/50 border-r border-border p-4 overflow-y-auto">
-                    <h3 className="text-xl font-bold tracking-tight text-foreground mb-4">Enemy Bases</h3>
-                    <div className="space-y-2">
-                        {[...Array(15)].map((_, i) => (
-                            <Skeleton key={i} className="h-20 w-full" />
-                        ))}
-                    </div>
+            <div className="flex-grow flex">
+                <div className="w-full lg:w-1/4 border-b lg:border-b-0 lg:border-r border-border p-4 space-y-2">
+                    <Skeleton className="h-8 w-1/2 mb-4" />
+                    {[...Array(15)].map((_, i) => (
+                        <Skeleton key={i} className="h-16 w-full" />
+                    ))}
                 </div>
-                <div className="flex-grow bg-background/20 relative flex items-center justify-center">
+                <div className="hidden lg:flex flex-1 items-center justify-center">
                     <div className="text-center">
-                        <h3 className="text-2xl font-bold tracking-tight text-foreground">Loading War Room...</h3>
-                        <p className="text-muted-foreground">Fetching live war data...</p>
+                        <Target className="h-16 w-16 mx-auto text-muted-foreground/20" />
+                        <p className="mt-4 text-lg font-semibold text-muted-foreground/50">Select a base to view the plan</p>
                     </div>
                 </div>
             </div>
         </div>
     );
-} 
+}

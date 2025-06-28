@@ -31,7 +31,7 @@ const getRoleBadgeVariant = (role: string): "default" | "secondary" | "destructi
     switch (role) {
         case 'leader': return 'default';
         case 'coLeader': return 'secondary';
-        case 'admin': return 'outline';
+        case 'elder': return 'outline';
         default: return 'outline';
     }
 }
