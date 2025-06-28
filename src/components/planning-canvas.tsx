@@ -7,7 +7,7 @@ import 'tldraw/tldraw.css';
 import { Tldraw, TLOnMountHandler, TLUiOverrides, DefaultSizeStyle } from 'tldraw';
 import { MeasureShapeUtil } from '@/components/tldraw/MeasureShapeUtil';
 import { MeasureShapeTool } from '@/components/tldraw/MeasureShapeTool';
-import { uiOverrides, CustomIcons } from '@/components/tldraw/ui-overrides';
+import { uiOverrides } from '@/components/tldraw/ui-overrides';
 import {
 	DefaultToolbar,
 	DefaultToolbarContent,
@@ -38,7 +38,6 @@ export function PlanningCanvas({ war, selectedBase, isReadOnly }: { war: WarData
 				</DefaultToolbar>
 			)
 		},
-		InFrontOfCanvas: () => <CustomIcons />,
 	}
 
     return (
