@@ -239,12 +239,15 @@ const ProfileHeader = ({ profile, playerData, isOwner, onProfileUpdate }: Profil
                                     aspect={16 / 5}
                                     className="max-h-full"
                                 >
-                                    <img
+                                    <Image
                                         ref={bannerImgRef}
                                         src={bannerSrc}
                                         alt="Banner to crop"
                                         onLoad={onBannerImageLoad}
                                         className="max-h-[60vh] object-contain"
+                                        width={800}
+                                        height={250}
+                                        unoptimized
                                     />
                                 </ReactCrop>
                             )

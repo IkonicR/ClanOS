@@ -50,6 +50,16 @@
     "use-debounce": "^10.0.5",
     "zod": "^3.25.67"
   },
+  "resolutions": {
+    "@tldraw/editor": "3.13.3",
+    "@tldraw/state": "3.13.3",
+    "@tldraw/state-react": "3.13.3",
+    "@tldraw/store": "3.13.3",
+    "@tldraw/tlschema": "3.13.3",
+    "@tldraw/utils": "3.13.3",
+    "@tldraw/validate": "3.13.3",
+    "tldraw": "3.13.3"
+  },
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^18",

@@ -212,7 +212,16 @@ const AvatarUpload = ({ url, onUpload, onRemove }: { url: string | null, onUploa
                             aspect={1}
                             circularCrop
                         >
-                            <img ref={imgRef} src={selectedImage} onLoad={onImageLoad} alt="Crop preview" crossOrigin="anonymous"/>
+                            <Image
+                                ref={imgRef}
+                                src={selectedImage}
+                                onLoad={onImageLoad}
+                                alt="Crop preview"
+                                width={0}
+                                height={0}
+                                style={{ width: '100%', height: 'auto' }}
+                                unoptimized
+                            />
                         </ReactCrop>
                     )}
                     <DialogFooter>
