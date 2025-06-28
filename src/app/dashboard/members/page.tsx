@@ -24,6 +24,7 @@ type SortableKey = 'clanRank' | 'trophies' | 'donations' | 'donationsReceived';
 
 const formatRole = (role: string) => {
     if (role === 'coLeader') return 'Co-Leader';
+    if (role === 'admin') return 'Elder';
     return role.charAt(0).toUpperCase() + role.slice(1);
 }
 

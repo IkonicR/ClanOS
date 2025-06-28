@@ -6,7 +6,7 @@ import {
 	ShapeUtil,
 	T,
 	TLBaseShape,
-	recordDiff,
+	RecordsDiff,
 	RecordProps,
 	Editor,
 	Vec,
