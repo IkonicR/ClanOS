@@ -40,8 +40,8 @@ export async function GET(
         id: comment.id,
         content: comment.content,
         created_at: comment.created_at,
-        author_name: comment.profiles?.username || 'Anonymous',
-        author_avatar: comment.profiles?.avatar_url || null
+        author_name: comment.profiles?.[0]?.username || 'Anonymous',
+        author_avatar: comment.profiles?.[0]?.avatar_url || null
     }));
 
     const response = {
