@@ -78,7 +78,7 @@ const AttackFeed = ({ attacks, userPlayerTag }: { attacks: any[], userPlayerTag?
                         "flex items-center justify-between p-3 rounded-lg bg-secondary/50 border-l-4 transition-all",
                         attack.clan === 'ours' ? 'border-primary' : 'border-destructive',
                         isMyAttack && 'ring-2 ring-primary bg-primary/10',
-                        wasMeAttacked && 'ring-2 ring-destructive bg-destructive/20'
+                        wasMeAttacked && 'ring-2 ring-destructive bg-destructive/10'
                     )}>
                         <div className="flex flex-col items-center w-1/4 text-center">
                             <span className={cn("font-bold text-sm truncate", isMyAttack && "text-primary")}>{attack.attackerName || 'Unknown'}</span>
@@ -154,6 +154,28 @@ const RosterRow = ({ member, isMe, opponentMembers }: { member: WarMember, isMe:
 export const CurrentWarStatus = ({ currentWar, userPlayerTag }: { clan: Clan, currentWar: War, userPlayerTag?: string }) => {
     const [warState, setWarState] = React.useState(currentWar.state);
     
+    const allAttacks = React.useMemo(() => {
+        if (!currentWar || currentWar.state === 'notInWar' || currentWar.state === 'preparation') return [];
+        let processedAttacks: any[] = [];
+        currentWar.clan.members.forEach((m: any) => {
+            if (m.attacks) {
+                processedAttacks.push(...m.attacks.map((a: any) => {
+                    const defender = currentWar.opponent.members.find((om: any) => om.tag === a.defenderTag);
+                    return { ...a, clan: 'ours', attackerName: m.name, attackerTag: m.tag, attackerMapPosition: m.mapPosition, defenderName: defender?.name, defenderMapPosition: defender?.mapPosition };
+                }));
+            }
+        });
+        currentWar.opponent.members.forEach((m: any) => {
+            if (m.attacks) {
+                processedAttacks.push(...m.attacks.map((a: any) => {
+                    const defender = currentWar.clan.members.find((cm: any) => cm.tag === a.defenderTag);
+                    return { ...a, clan: 'theirs', attackerName: m.name, attackerTag: m.tag, attackerMapPosition: m.mapPosition, defenderName: defender?.name, defenderMapPosition: defender?.mapPosition };
+                }));
+            }
+        });
+        return processedAttacks.sort((a,b) => b.order - a.order);
+    }, [currentWar]);
+
     React.useEffect(() => {
         setWarState(currentWar.state);
     }, [currentWar.state]);
@@ -189,28 +211,6 @@ export const CurrentWarStatus = ({ currentWar, userPlayerTag }: { clan: Clan, cu
     }
     
     const sortedMembers = [...clan.members].sort((a, b) => a.mapPosition - b.mapPosition);
-
-    const allAttacks = React.useMemo(() => {
-        if (!currentWar || currentWar.state === 'notInWar') return [];
-        let processedAttacks: any[] = [];
-        currentWar.clan.members.forEach((m: any) => {
-            if (m.attacks) {
-                processedAttacks.push(...m.attacks.map((a: any) => {
-                    const defender = currentWar.opponent.members.find((om: any) => om.tag === a.defenderTag);
-                    return { ...a, clan: 'ours', attackerName: m.name, attackerTag: m.tag, attackerMapPosition: m.mapPosition, defenderName: defender?.name, defenderMapPosition: defender?.mapPosition };
-                }));
-            }
-        });
-        currentWar.opponent.members.forEach((m: any) => {
-            if (m.attacks) {
-                processedAttacks.push(...m.attacks.map((a: any) => {
-                    const defender = currentWar.clan.members.find((cm: any) => cm.tag === a.defenderTag);
-                    return { ...a, clan: 'theirs', attackerName: m.name, attackerTag: m.tag, attackerMapPosition: m.mapPosition, defenderName: defender?.name, defenderMapPosition: defender?.mapPosition };
-                }));
-            }
-        });
-        return processedAttacks.sort((a,b) => b.order - a.order);
-    }, [currentWar]);
 
     return (
         <Card className="bg-card/75 backdrop-blur-lg border-white/10">

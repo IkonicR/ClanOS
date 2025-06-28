@@ -6,7 +6,7 @@ export default function ClanProfilePage() {
       <Construction className="w-16 h-16 mb-4 text-primary" />
       <h1 className="text-2xl font-bold">Coming Soon!</h1>
       <p className="text-lg text-muted-foreground">
-        We're hard at work building this feature. Check back soon!
+        We&apos;re hard at work building this feature. Check back soon!
       </p>
     </div>
   );
