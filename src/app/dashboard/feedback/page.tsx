@@ -55,16 +55,6 @@ function FeedbackList() {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleCommentAdded = (requestId: number) => {
-    setRequests(currentRequests =>
-      currentRequests.map(r =>
-        r.id === requestId
-          ? { ...r, comments_count: (r.comments_count ?? 0) + 1 }
-          : r
-      )
-    );
-  };
-
   const handleVote = async (e: React.MouseEvent, requestId: number) => {
     e.stopPropagation();
     if (!user) {
@@ -166,7 +156,7 @@ function FeedbackList() {
       
       <Dialog open={!!selectedRequest} onOpenChange={(isOpen) => !isOpen && setSelectedRequestId(null)}>
         <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0">
-          {selectedRequest && <FeedbackDetail params={{ id: selectedRequest.id.toString() }} onCommentAdded={() => handleCommentAdded(selectedRequest.id)} />}
+          {selectedRequest && <FeedbackDetail params={{ id: selectedRequest.id.toString() }} />}
         </DialogContent>
       </Dialog>
     </>
