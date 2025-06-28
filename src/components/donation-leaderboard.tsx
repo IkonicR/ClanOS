@@ -75,6 +75,67 @@ interface MemberTableProps {
     isLeader: boolean;
 }
 
+const MemberRow = ({ member, index, type, isLeader, isCurrentUser, getMemberValue, getProgressValue }: any) => {
+    const donationRatio = member.donationsReceived > 0 ? member.donations / member.donationsReceived : member.donations;
+    const showWarning = isLeader && donationRatio < 0.3 && type === 'ratio';
+
+    return (
+        <TableRow className={cn(isCurrentUser && "bg-accent/20")}>
+            <TableCell className="font-medium">{index + 1}</TableCell>
+            <TableCell>
+                <div className="flex items-center space-x-2">
+                    <Image src={member.league.iconUrls.tiny} alt={member.league.name} width={24} height={24} />
+                    <div>
+                        <p className="font-medium truncate max-w-[120px]">{member.name}</p>
+                        <p className="text-xs text-muted-foreground">TH{member.townHallLevel}</p>
+                    </div>
+                </div>
+            </TableCell>
+            <TableCell className="text-right">
+                <div className="flex flex-col items-end">
+                    <span className="font-semibold">{getMemberValue(member)}</span>
+                    <Progress value={getProgressValue(member)} className="h-1 w-20 mt-1" />
+                </div>
+            </TableCell>
+            {isLeader && (
+                <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-2">
+                        {showWarning && <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </TableCell>
+            )}
+        </TableRow>
+    )
+}
+
+const MemberCard = ({ member, index, type, isLeader, isCurrentUser, getMemberValue, getProgressValue }: any) => {
+    const donationRatio = member.donationsReceived > 0 ? member.donations / member.donationsReceived : member.donations;
+    const showWarning = isLeader && donationRatio < 0.3 && type === 'ratio';
+
+    return (
+        <div className={cn("p-3 rounded-lg bg-secondary/30", isCurrentUser && "ring-1 ring-primary")}>
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                    <span className="font-bold text-lg text-muted-foreground">#{index + 1}</span>
+                    <Image src={member.league.iconUrls.tiny} alt={member.league.name} width={28} height={28} />
+                    <div>
+                        <p className="font-semibold truncate max-w-[150px]">{member.name}</p>
+                        <p className="text-xs text-muted-foreground">TH{member.townHallLevel}</p>
+                    </div>
+                </div>
+                <div className="flex flex-col items-end">
+                     <span className="font-bold">{getMemberValue(member)}</span>
+                     <span className="text-xs text-muted-foreground">{type === 'ratio' ? 'Ratio' : type === 'donations' ? 'Donated' : 'Received'}</span>
+                </div>
+            </div>
+            <Progress value={getProgressValue(member)} className="h-1.5 w-full mt-2" />
+        </div>
+    )
+}
+
 const MemberTable: React.FC<MemberTableProps> = ({ members, type, playerTag, isLeader }) => {
     const topValue = useMemo(() => {
         if (members.length === 0) return 1;
@@ -104,54 +165,48 @@ const MemberTable: React.FC<MemberTableProps> = ({ members, type, playerTag, isL
 
     return (
         <div className="overflow-y-auto max-h-96">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[50px]">Rank</TableHead>
-                        <TableHead>Player</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
-                        {isLeader && <TableHead className="w-[50px] text-right"> </TableHead>}
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {members.map((member, index) => {
-                        const isCurrentUser = member.tag === playerTag;
-                        const donationRatio = member.donationsReceived > 0 ? member.donations / member.donationsReceived : member.donations;
-                        const showWarning = isLeader && donationRatio < 0.3 && type === 'ratio';
-
-                        return (
-                            <TableRow key={member.tag} className={cn(isCurrentUser && "bg-accent/20")}>
-                                <TableCell className="font-medium">{index + 1}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center space-x-2">
-                                        <Image src={member.league.iconUrls.tiny} alt={member.league.name} width={24} height={24} />
-                                        <div>
-                                            <p className="font-medium">{member.name}</p>
-                                            <p className="text-xs text-muted-foreground">TH{member.townHallLevel}</p>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <div className="flex flex-col items-end">
-                                        <span className="font-semibold">{getMemberValue(member)}</span>
-                                        <Progress value={getProgressValue(member)} className="h-1 w-20 mt-1" />
-                                    </div>
-                                </TableCell>
-                                {isLeader && (
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end space-x-2">
-                                            {showWarning && <AlertTriangle className="h-4 w-4 text-amber-500" />}
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    </TableCell>
-                                )}
-                            </TableRow>
-                        );
-                    })}
-                </TableBody>
-            </Table>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-2 mt-4">
+                {members.map((member, index) => (
+                    <MemberCard 
+                        key={member.tag}
+                        member={member} 
+                        index={index}
+                        type={type}
+                        isLeader={isLeader}
+                        isCurrentUser={member.tag === playerTag}
+                        getMemberValue={getMemberValue}
+                        getProgressValue={getProgressValue}
+                    />
+                ))}
+            </div>
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[50px]">Rank</TableHead>
+                            <TableHead>Player</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            {isLeader && <TableHead className="w-[50px] text-right"> </TableHead>}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {members.map((member, index) => (
+                           <MemberRow
+                                key={member.tag}
+                                member={member} 
+                                index={index}
+                                type={type}
+                                isLeader={isLeader}
+                                isCurrentUser={member.tag === playerTag}
+                                getMemberValue={getMemberValue}
+                                getProgressValue={getProgressValue}
+                           />
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
         </div>
     );
 };

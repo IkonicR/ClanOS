@@ -57,11 +57,86 @@ export type MemberWithFriendship = Member & {
     } | null;
 };
   
-export type Profile = {
+export interface Profile {
     id: string;
-    username: string;
-    avatar_url?: string;
-    player_tag?: string;
-    clan_tag?: string;
-    role?: 'admin' | 'user';
+    updated_at: string;
+    username: string | null;
+    avatar_url: string | null;
+    location: string | null;
+    bio: string | null;
+    player_tag: string | null;
+    clan_tag: string | null;
+    role: 'admin' | 'user' | null;
+    languages: string[] | null;
+}
+
+export interface Clan {
+    tag: string;
+    name:string;
+    clanLevel: number;
+    badgeUrls: {
+      small: string;
+      large: string;
+      medium: string;
+};
+    warLeague?: {
+      id: number;
+      name: string;
+    };
+    memberList?: Member[];
+    description?: string;
+}
+  
+export type WarMember = {
+    tag: string;
+    name: string;
+    mapPosition: number;
+    townhallLevel: number;
+    attacks?: any[]; // Simplified for now
+    bestOpponentAttack?: any; // Simplified for now
+};
+
+export type WarClan = {
+    tag: string;
+    name: string;
+    badgeUrls: { small: string, medium: string, large: string };
+    clanLevel: number;
+    attacks: number;
+    stars: number;
+    destructionPercentage: number;
+    expEarned: number;
+    members: WarMember[];
+};
+
+export type War = {
+    state: 'notInWar' | 'preparation' | 'inWar' | 'warEnded';
+    clan: WarClan;
+    opponent: WarClan;
+    teamSize: number;
+    startTime: string;
+    endTime: string;
+};
+
+export interface ClanWar {
+    result: 'win' | 'lose' | 'tie';
+    endTime: string;
+    teamSize: number;
+    attacksPerMember: number;
+    clan: WarClan;
+    opponent: WarClan;
+}
+
+export interface ClanProfile {
+    clan_tag: string;
+    description: string | null;
+    recruitment_status: 'open' | 'closed' | 'invite_only';
+    banner_image_url: string | null;
+    created_at: string;
+}
+
+export type Badge = {
+    id: string;
+    name: string;
+    description: string;
+    icon_url: string;
 };

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle, PlayCircle, Trash2 } from 'lucide-react';
+import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle, PlayCircle, Trash2, Calendar, User, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -20,6 +20,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { cn } from '@/lib/utils';
+
+const ResponsiveAlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      "flex flex-col-reverse gap-2 mt-4 sm:mt-0 sm:flex-row sm:justify-end sm:space-x-2",
+      className
+    )}
+    {...props}
+  />
+);
 
 interface InviteCode {
   id: string;
@@ -44,6 +55,68 @@ function StatCard({ title, value, icon: Icon }: { title: string; value: string |
     </Card>
   );
 }
+
+const InviteCodeCard = ({ invite, onCopy, onDelete }: { invite: InviteCode, onCopy: (code: string) => void, onDelete: (id: string) => void }) => {
+    const getStatus = () => {
+        if (invite.used_by) return { text: 'Used', variant: 'secondary', icon: Users };
+        if (new Date(invite.expires_at) < new Date()) return { text: 'Expired', variant: 'destructive', icon: XCircle };
+        return { text: 'Active', variant: 'default', className: 'bg-green-600/90 text-white', icon: CheckCircle2 };
+    };
+
+    const status = getStatus();
+    
+    return (
+        <Card className="hover:bg-secondary/50 transition-colors">
+            <CardHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <CardTitle className="font-mono text-lg">{invite.code}</CardTitle>
+                        <div className="mt-1">
+                            <Badge variant={status.variant as any} className={status.className}>
+                                <status.icon className="w-3 h-3 mr-1.5" />
+                                {status.text}
+                            </Badge>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => onCopy(invite.code)}>
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will permanently delete the invite code <span className="font-mono font-bold">{invite.code}</span>. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <ResponsiveAlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => onDelete(invite.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                </ResponsiveAlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-3">
+                 <div className="flex items-center">
+                    <User className="w-4 h-4 mr-3"/>
+                    <span>Used by: <span className="font-medium text-foreground">{invite.used_by_username ?? 'N/A'}</span></span>
+                </div>
+                 <div className="flex items-center">
+                    <Calendar className="w-4 h-4 mr-3"/>
+                    <span>Expires: <span className="font-medium text-foreground">{new Date(invite.expires_at).toLocaleDateString()}</span></span>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
 
 export default function AdminInvitesPage() {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
@@ -164,16 +237,16 @@ export default function AdminInvitesPage() {
             <StatCard title="Expired Codes" value={stats.expired} icon={XCircle} />
         </div>
         <Card className="border-border/60">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <CardTitle>Generated Codes</CardTitle>
                     <CardDescription>
                         Here are all the invite codes that have been generated.
                     </CardDescription>
                 </div>
-                <Button onClick={generateInviteCode} disabled={isGenerating}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                {isGenerating ? 'Generating...' : 'Generate New Code'}
+                <Button onClick={generateInviteCode} disabled={isGenerating} className="w-full sm:w-auto">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    <span className="sm:inline">{isGenerating ? 'Generating...' : 'Generate New Code'}</span>
                 </Button>
             </CardHeader>
             <CardContent>
@@ -196,90 +269,111 @@ export default function AdminInvitesPage() {
                     </Button>
                 </div>
                 ) : (
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Used By</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Expires</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {inviteCodes.map((invite) => (
-                        <TableRow key={invite.id} className="hover:bg-secondary/50">
-                        <TableCell className="font-mono">{invite.code}</TableCell>
-                        <TableCell>
-                            {invite.used_by ? (
-                                <Badge variant="secondary" className="flex items-center w-fit"><Users className="w-3 h-3 mr-1.5"/>Used</Badge>
-                            ) : new Date(invite.expires_at) < new Date() ? (
-                                <Badge variant="destructive" className="flex items-center w-fit"><XCircle className="w-3 h-3 mr-1.5"/>Expired</Badge>
-                            ) : (
-                                <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
-                            )}
-                        </TableCell>
-                        <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
-                        <TableCell>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>{new Date(invite.created_at).toLocaleDateString()}</TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{new Date(invite.created_at).toLocaleString()}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </TableCell>
-                        <TableCell>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>{new Date(invite.expires_at).toLocaleDateString()}</TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{new Date(invite.expires_at).toLocaleString()}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
-                                        <Copy className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p>Copy Code</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the invite code.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteCode(invite.id)}>
-                                    Yes, delete it
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
-                        </TableCell>
-                        </TableRow>
-                    ))}
-                    </TableBody>
-                </Table>
+                <div>
+                    {/* Mobile View */}
+                    <div className="md:hidden space-y-4">
+                        {inviteCodes.map((invite) => (
+                            <InviteCodeCard key={invite.id} invite={invite} onCopy={copyToClipboard} onDelete={handleDeleteCode} />
+                        ))}
+                    </div>
+
+                    {/* Desktop View */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Used By</TableHead>
+                                <TableHead>Created</TableHead>
+                                <TableHead>Expires</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                            {inviteCodes.map((invite) => (
+                                <TableRow key={invite.id} className="hover:bg-secondary/50">
+                                <TableCell className="font-mono">{invite.code}</TableCell>
+                                <TableCell>
+                                    {invite.used_by ? (
+                                        <Badge variant="secondary" className="flex items-center w-fit"><Users className="w-3 h-3 mr-1.5"/>Used</Badge>
+                                    ) : new Date(invite.expires_at) < new Date() ? (
+                                        <Badge variant="destructive" className="flex items-center w-fit"><XCircle className="w-3 h-3 mr-1.5"/>Expired</Badge>
+                                    ) : (
+                                        <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
+                                    )}
+                                </TableCell>
+                                <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
+                                <TableCell>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>{new Date(invite.created_at).toLocaleDateString()}</TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{new Date(invite.created_at).toLocaleString()}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </TableCell>
+                                <TableCell>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>{new Date(invite.expires_at).toLocaleDateString()}</TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>{new Date(invite.expires_at).toLocaleString()}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                <div className="flex items-center justify-end">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                            <Button variant="ghost" size="icon" onClick={() => copyToClipboard(invite.code)}>
+                                                <Copy className="h-4 w-4" />
+                                            </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Copy Code</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <AlertDialog>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Delete Code</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the invite code <span className="font-mono font-bold">{invite.code}</span>. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <ResponsiveAlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteCode(invite.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                            </ResponsiveAlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                                </TableCell>
+                                </TableRow>
+                            ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
                 )}
             </CardContent>
         </Card>

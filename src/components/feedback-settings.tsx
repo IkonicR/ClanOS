@@ -92,7 +92,7 @@ export const FeedbackSettings = ({ email }: { email: string }) => {
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-4">
             <FeatureRequestForm email={email} onSuccess={handleNewSuccess} />
             
             <div className="mt-12">

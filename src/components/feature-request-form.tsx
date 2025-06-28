@@ -89,52 +89,49 @@ export default function FeatureRequestForm({ email, onSuccess, isEditMode = fals
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+            <h3 className="text-lg font-medium">{isEditMode ? 'Edit Your Idea' : 'Submit an Idea'}</h3>
+            <p className="text-sm text-muted-foreground">{isEditMode ? 'Refine your suggestion and save the changes.' : 'Have a feature request or an idea to improve the app? Let us know!'}</p>
+        </div>
+        
         {isEditMode && onCancel && (
-            <Button variant="ghost" size="sm" onClick={onCancel} className="absolute top-4 left-4">
+            <Button variant="ghost" size="sm" onClick={onCancel}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
             </Button>
         )}
-        <CardTitle>{isEditMode ? 'Edit Your Idea' : 'Submit an Idea'}</CardTitle>
-        <CardDescription>{isEditMode ? 'Refine your suggestion and save the changes.' : 'Have a feature request or an idea to improve the app? Let us know!'}</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
+        
+        <div className="space-y-2">
             <Label htmlFor="title">Idea Title</Label>
             <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Better Troop Donation UI" />
-          </div>
-          <div className="space-y-2">
+        </div>
+        <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your idea in a bit more detail..." />
-          </div>
-          <div className="space-y-2">
+        </div>
+        <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger id="category">
+                <SelectTrigger id="category">
                 <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
+                </SelectTrigger>
+                <SelectContent>
                 {FEATURE_REQUEST_CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
-              </SelectContent>
+                </SelectContent>
             </Select>
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button
-            type="submit"
-            className="w-full text-lg py-6 btn-premium"
-            disabled={isLoading}
-          >
-            {isLoading ? (isEditMode ? 'Saving...' : 'Submitting...') : (isEditMode ? 'Save Changes' : 'Submit My Idea')}
-            {!isLoading && <ArrowRight className="w-5 h-5 ml-2" />}
-          </Button>
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+        
+        <Button
+        type="submit"
+        className="w-full text-lg py-6 btn-premium"
+        disabled={isLoading}
+        >
+        {isLoading ? (isEditMode ? 'Saving...' : 'Submitting...') : (isEditMode ? 'Save Changes' : 'Submit My Idea')}
+        {!isLoading && <ArrowRight className="w-5 h-5 ml-2" />}
+        </Button>
+    </form>
   );
 } 
