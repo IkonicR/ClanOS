@@ -30,7 +30,7 @@ interface FeatureRequest {
     description: string;
 }
 
-export default function FeedbackDetail({ params, onCommentAdded }: { params: { id: string }, onCommentAdded?: () => void }) {
+export default function FeedbackDetail({ params }: { params: { id: string }}) {
     const [request, setRequest] = useState<RequestDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
@@ -84,8 +84,8 @@ export default function FeedbackDetail({ params, onCommentAdded }: { params: { i
             });
             if (!res.ok) throw new Error('Failed to post comment');
             
-            // Trigger the callback to update the parent's state
-            onCommentAdded?.();
+            // The component re-fetches its own data, so a callback is not needed here.
+            // onCommentAdded?.();
 
             // Re-fetch to get the real data, which will replace the optimistic comment
             await fetchRequestDetails(); 
