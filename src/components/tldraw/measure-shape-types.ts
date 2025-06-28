@@ -8,5 +8,6 @@ export type MeasureShape = TLBaseShape<
 		text: string
 		flipX: boolean
 		flipY: boolean
+		color: string
 	}
 > 

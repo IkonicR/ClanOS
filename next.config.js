@@ -1,5 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: [
+    'tldraw',
+    '@tldraw/editor',
+    '@tldraw/state',
+    '@tldraw/store',
+    '@tldraw/utils',
+    '@tldraw/validate',
+    '@tldraw/tlschema',
+    '@tldraw/state-react',
+  ],
   images: {
     remotePatterns: [
       {

@@ -5,7 +5,6 @@ import { Swords, Star, Target, Clock, ArrowLeft } from 'lucide-react';
 import { War, WarMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import 'tldraw/tldraw.css';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { DefaultSizeStyle } from 'tldraw';
 import { Button } from '@/components/ui/button';

@@ -10,6 +10,7 @@ import {
 	RecordProps,
 	Editor,
 	Vec,
+	DefaultColorStyle,
 } from 'tldraw'
 import { MeasureShape } from './measure-shape-types'
 
@@ -21,6 +22,11 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 		text: T.string,
 		flipX: T.boolean,
 		flipY: T.boolean,
+		color: DefaultColorStyle,
+	}
+
+	static styleProps = {
+		color: DefaultColorStyle,
 	}
 
 	getDefaultProps(): MeasureShape['props'] {
@@ -30,6 +36,7 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 			text: '0',
 			flipX: false,
 			flipY: false,
+			color: 'black',
 		}
 	}
 
@@ -42,7 +49,11 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 	}
 
 	component(shape: MeasureShape) {
-		const { w, h, text, flipX, flipY } = shape.props
+		const { w, h, text, flipX, flipY, color } = shape.props
+
+		if (w === 0 && h === 0) {
+			return null
+		}
 
 		const x1 = flipX ? w : 0
 		const y1 = flipY ? h : 0
@@ -65,11 +76,11 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 					viewBox={`0 0 ${w} ${h}`}
 					style={{ position: 'absolute' }}
 				>
-					<line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--color-text)" strokeWidth={2} />
+					<line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={2} />
 				</svg>
 				<div
 					style={{
-						color: 'var(--color-text)',
+						color: color,
 						backgroundColor: 'var(--color-background)',
 						padding: '4px 8px',
 						borderRadius: '4px',

@@ -4,7 +4,18 @@ import React from 'react';
 import { War, WarMember } from '@/lib/types';
 import { RoomProvider, ClientSideSuspense } from '@liveblocks/react';
 import 'tldraw/tldraw.css';
-import { Tldraw, TLOnMountHandler, TLUiOverrides, TLUiAssetUrlOverrides, TLComponents, useTools, useIsToolSelected, TldrawUiMenuItem, DefaultToolbar, DefaultToolbarContent } from 'tldraw';
+import {
+	Tldraw,
+	TLOnMountHandler,
+	TLUiOverrides,
+	TLUiAssetUrlOverrides,
+	TLComponents,
+	useTools,
+	useIsToolSelected,
+	TldrawUiMenuItem,
+	DefaultToolbar,
+	DefaultToolbarContent,
+} from 'tldraw'
 import { MeasureShapeUtil } from '@/components/tldraw/MeasureShapeUtil';
 import { MeasureShapeTool } from '@/components/tldraw/MeasureShapeTool';
 import { uiOverrides } from '@/components/tldraw/ui-overrides';
@@ -45,13 +56,13 @@ export function PlanningCanvas({ war, selectedBase, isReadOnly }: { war: WarData
 			<RoomProvider id={roomId} initialPresence={{}}>
 				<ClientSideSuspense fallback={<div className="flex items-center justify-center h-full text-foreground">Loading planning canvas...</div>}>
 					{() => (
-						<Tldraw 
-							persistenceKey={roomId} 
-							onMount={handleMount} 
-							shapeUtils={customShapeUtils} 
-							tools={customTools} 
-							overrides={uiOverrides} 
-							components={components} 
+						<Tldraw
+							persistenceKey={roomId}
+							onMount={handleMount}
+							shapeUtils={customShapeUtils}
+							tools={customTools}
+							overrides={uiOverrides}
+							components={components}
 							assetUrls={customAssetUrls}
 						/>
 					)}
