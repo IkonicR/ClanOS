@@ -4,11 +4,10 @@ export const uiOverrides: TLUiOverrides = {
 	tools(editor, tools) {
 		tools.measure = {
 			id: 'measure',
-			label: 'Measure',
-			readonlyOk: false,
 			icon: 'ruler',
+			label: 'Measure',
 			kbd: 'm',
-			onSelect() {
+			onSelect: () => {
 				editor.setCurrentTool('measure')
 			},
 		}
