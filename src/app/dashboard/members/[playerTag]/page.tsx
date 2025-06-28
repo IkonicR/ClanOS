@@ -13,7 +13,7 @@ const StatCard = ({ icon: Icon, label, value, color }: { icon: React.ElementType
     <Card className="bg-card/50">
         <CardContent className="p-4 flex items-center">
             <div className={`p-2 rounded-md mr-4 ${color || 'bg-primary/20'}`}>
-                <Icon className={`h-6 w-6 ${color ? 'text-white' : 'text-primary'}`} />
+                <Icon className={`h-6 w-6 ${color ? 'text-background' : 'text-primary'}`} />
             </div>
             <div>
                 <p className="text-sm text-muted-foreground">{label}</p>
@@ -111,7 +111,7 @@ const PlayerProfilePage = () => {
             <Card className="bg-card/50 backdrop-blur-lg border border-white/10">
                 <CardContent className="p-6 flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
                     <Image 
-                        src={getTownHallImage(townHallLevel, townHallWeaponLevel)} 
+                        src={getTownHallImage(townHallLevel)} 
                         alt={`Town Hall ${townHallLevel}`}
                         width={128} 
                         height={128}
@@ -131,10 +131,10 @@ const PlayerProfilePage = () => {
             </Card>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <StatCard icon={Trophy} label="Best Trophies" value={bestTrophies} color="bg-yellow-500/20" />
-                <StatCard icon={Star} label="War Stars" value={warStars} color="bg-orange-500/20" />
-                <StatCard icon={TrendingUp} label="Donations" value={donations} color="bg-green-500/20" />
-                <StatCard icon={TrendingDown} label="Received" value={donationsReceived} color="bg-red-500/20" />
+                <StatCard icon={Trophy} label="Best Trophies" value={bestTrophies} color="bg-accent" />
+                <StatCard icon={Star} label="War Stars" value={warStars} color="bg-accent" />
+                <StatCard icon={TrendingUp} label="Donations" value={donations} color="bg-primary" />
+                <StatCard icon={TrendingDown} label="Received" value={donationsReceived} color="bg-destructive" />
             </div>
 
             <Card className="bg-card/50 backdrop-blur-lg border border-white/10">
