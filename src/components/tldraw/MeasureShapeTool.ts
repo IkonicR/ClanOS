@@ -48,6 +48,8 @@ class Dragging extends StateNode {
 				w: 0,
 				h: 0,
 				text: '0',
+				flipX: false,
+				flipY: false,
 			},
 		})
 	}
@@ -56,13 +58,25 @@ class Dragging extends StateNode {
 		if (!this.info) return
 		const { x, y } = this.editor.inputs.currentPagePoint
 		const start = this.editor.inputs.originPagePoint
+
+		const newX = Math.min(start.x, x)
+		const newY = Math.min(start.y, y)
+		const newW = Math.abs(x - start.x)
+		const newH = Math.abs(y - start.y)
+		const flipX = x < start.x
+		const flipY = y < start.y
+
 		this.editor.updateShape({
 			id: shapeId,
 			type: 'measure',
+			x: newX,
+			y: newY,
 			props: {
-				w: x - start.x,
-				h: y - start.y,
+				w: newW,
+				h: newH,
 				text: `${Math.hypot(x - start.x, y - start.y).toFixed(0)}`,
+				flipX,
+				flipY,
 			},
 		})
 	}

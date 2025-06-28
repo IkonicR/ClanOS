@@ -19,13 +19,17 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 		w: T.number,
 		h: T.number,
 		text: T.string,
+		flipX: T.boolean,
+		flipY: T.boolean,
 	}
 
 	getDefaultProps(): MeasureShape['props'] {
 		return {
-			w: 200,
+			w: 0,
 			h: 0,
 			text: '0',
+			flipX: false,
+			flipY: false,
 		}
 	}
 
@@ -38,8 +42,12 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 	}
 
 	component(shape: MeasureShape) {
-		const distance = Math.sqrt(shape.props.w * shape.props.w + shape.props.h * shape.props.h)
-		const text = distance.toFixed(0)
+		const { w, h, text, flipX, flipY } = shape.props
+
+		const x1 = flipX ? w : 0
+		const y1 = flipY ? h : 0
+		const x2 = flipX ? 0 : w
+		const y2 = flipY ? 0 : h
 
 		return (
 			<HTMLContainer
@@ -52,27 +60,20 @@ export class MeasureShapeUtil extends BaseBoxShapeUtil<MeasureShape> {
 				}}
 			>
 				<svg
-					width="100%"
-					height="100%"
-					viewBox={`0 0 ${shape.props.w} ${Math.max(1, Math.abs(shape.props.h))}`}
+					width={w}
+					height={h}
+					viewBox={`0 0 ${w} ${h}`}
 					style={{ position: 'absolute' }}
 				>
-					<line
-						x1={0}
-						y1={shape.props.h >= 0 ? 0 : Math.abs(shape.props.h)}
-						x2={shape.props.w}
-						y2={shape.props.h >= 0 ? shape.props.h : 0}
-						stroke="var(--color-text)"
-						strokeWidth={2}
-					/>
+					<line x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--color-text)" strokeWidth={2} />
 				</svg>
 				<div
 					style={{
 						color: 'var(--color-text)',
 						backgroundColor: 'var(--color-background)',
-						padding: '2px 4px',
-						borderRadius: '2px',
-						fontSize: '12px',
+						padding: '4px 8px',
+						borderRadius: '4px',
+						fontSize: '14px',
 						whiteSpace: 'nowrap',
 					}}
 				>

@@ -6,5 +6,7 @@ export type MeasureShape = TLBaseShape<
 		w: number
 		h: number
 		text: string
+		flipX: boolean
+		flipY: boolean
 	}
 > 
