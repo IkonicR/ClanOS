@@ -42,9 +42,33 @@ type DashboardData = {
 }
 
 async function getClanData(user: User): Promise<{ error: string | null, data: Partial<ClanData> | null }> {
-    const playerTag = user.user_metadata?.playerTag;
+    const supabase = createClient();
+    
+    // Get user's profile data (prioritizing active linked profile)
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('player_tag, clan_tag')
+        .eq('id', user.id)
+        .single();
+
+    // Check for active linked profile
+    const { data: activeLinkedProfile } = await supabase
+        .from('linked_profiles')
+        .select('player_tag, clan_tag')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    // Use active linked profile's data if available
+    const playerTag = activeLinkedProfile?.player_tag || userProfile?.player_tag;
+    const clanTag = activeLinkedProfile?.clan_tag || userProfile?.clan_tag;
+    
     if (!playerTag) {
         return { error: 'Player tag not found', data: null };
+    }
+
+    if (!clanTag) {
+        return { error: 'Not in a clan', data: { playerTag } };
     }
 
     const cocApiToken = process.env.CLASH_OF_CLANS_API_TOKEN;
@@ -52,6 +76,7 @@ async function getClanData(user: User): Promise<{ error: string | null, data: Pa
         throw new Error('Clash of Clans API token is not configured on the server.');
     }
 
+    // Get player info for display name
     const encodedPlayerTag = encodeURIComponent(playerTag);
     const playerRes = await fetch(`https://cocproxy.royaleapi.dev/v1/players/${encodedPlayerTag}`, {
         headers: { 'Authorization': `Bearer ${cocApiToken}` },
@@ -61,18 +86,15 @@ async function getClanData(user: User): Promise<{ error: string | null, data: Pa
     if (!playerRes.ok) throw new Error(`Failed to fetch player data for tag: ${playerTag}`);
     
     const playerInfo: PlayerInfo = await playerRes.json();
-
-    if (!playerInfo.clan) {
-        return { error: 'Not in a clan', data: { playerInfo, playerTag } };
-    }
     
-    const encodedClanTag = encodeURIComponent(playerInfo.clan.tag);
+    // Get clan info using the clan_tag from profile/linked profile
+    const encodedClanTag = encodeURIComponent(clanTag);
     const clanRes = await fetch(`https://cocproxy.royaleapi.dev/v1/clans/${encodedClanTag}`, {
         headers: { 'Authorization': `Bearer ${cocApiToken}` },
         next: { revalidate: 60 }
     });
 
-    if (!clanRes.ok) throw new Error(`Failed to fetch clan data for tag: ${playerInfo.clan.tag}`);
+    if (!clanRes.ok) throw new Error(`Failed to fetch clan data for tag: ${clanTag}`);
     
     const clanInfo: ClanInfo = await clanRes.json();
 

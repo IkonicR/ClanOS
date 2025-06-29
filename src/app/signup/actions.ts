@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import { getPlayerInfo } from '@/lib/coc-api';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
+import { getClanInfo } from '@/lib/coc-api';
 
 const FormSchema = z.object({
   playerTag: z.string().trim().min(1, { message: 'Player Tag is required.' }),
@@ -90,25 +91,55 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
                 { auth: { autoRefreshToken: false, persistSession: false } }
             );
 
+            // Map COC role to our role system for new user
+            let userRole: string = 'user'; // default
+            if (playerInfo.clan && playerInfo.clan.tag) {
+                try {
+                    const clanData = await getClanInfo(playerInfo.clan.tag);
+                    const member = clanData.memberList?.find((m: any) => m.tag === playerTag);
+                    
+                    if (member) {
+                        switch (member.role.toLowerCase()) {
+                            case 'leader':
+                                userRole = 'leader';
+                                break;
+                            case 'co-leader':
+                            case 'coleader':
+                                userRole = 'coLeader';
+                                break;
+                            case 'elder':
+                                userRole = 'elder';
+                                break;
+                            case 'member':
+                            default:
+                                userRole = 'user';
+                                break;
+                        }
+                    }
+                } catch (roleError) {
+                    console.warn('Could not determine role during signup:', roleError);
+                }
+            }
+
             const { error: profileUpdateError } = await supabaseAdmin
                 .from('profiles')
                 .update({ 
                     clan_tag: playerInfo.clan.tag,
                     clan_name: playerInfo.clan.name,
-                    username: playerInfo.name // Also a good idea to set the username
+                    username: playerInfo.name,
+                    in_game_name: playerInfo.name,
+                    role: userRole
                 })
                 .eq('id', user.id);
 
             if (profileUpdateError) {
                 console.error('Failed to update profile with clan info:', profileUpdateError);
-                // The user is created, but their profile is incomplete.
-                // This is not ideal, but we can let them proceed.
-                // You might want to add a mechanism for them to retry this later.
+                return { message: 'We could not update your profile with your clan information. Please try signing up again.' };
             }
         }
       } catch (apiError) {
           console.error("Could not fetch player info after signup: ", apiError);
-          // Non-fatal, user can still login. Profile will be incomplete.
+          return { message: 'We could not fetch your player information from the Clash of Clans API. Please ensure your player tag is correct and try again.' };
       }
 
       // Invalidate the invite code

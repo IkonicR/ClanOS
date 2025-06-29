@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import AdminInvitesPage from '../admin/invites/page';
 import { FeedbackSettings } from '@/components/feedback-settings';
 import { LinkClanCard } from '@/components/link-clan-card';
+import { LinkedProfilesManager } from '@/components/profile/LinkedProfilesManager';
 import { useProfile } from '@/lib/hooks/useProfile';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -396,6 +397,8 @@ const ProfileSettings = ({ initialProfile, onUpdate }: { initialProfile: any, on
                     <AvatarUpload url={initialProfile.avatar_url} onUpload={handleAvatarUpload} onRemove={handleRemoveAvatar} />
                 </CardContent>
             </Card>
+
+            <LinkedProfilesManager />
 
             <GameProfile profile={initialProfile} />
             <form onSubmit={handleSubmit(onSubmit)}>

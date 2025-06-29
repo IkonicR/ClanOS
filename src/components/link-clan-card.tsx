@@ -73,10 +73,29 @@ export function LinkClanCard() {
         // This is not critical, so just log it
         console.warn('Could not update user metadata:', userError.message);
     }
+
+    // 4. Automatically sync role after linking clan
+    try {
+        const syncResponse = await fetch('/api/profile/sync-role', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (syncResponse.ok) {
+            const syncData = await syncResponse.json();
+            console.log('Role sync result:', syncData);
+        } else {
+            console.warn('Failed to auto-sync role after clan linking');
+        }
+    } catch (syncError) {
+        console.warn('Error during auto role sync:', syncError);
+    }
     
     toast({
       title: 'Success!',
-      description: `Your profile has been linked to clan ${playerData.clan.name}.`,
+      description: `Your profile has been linked to clan ${playerData.clan.name}. Your role has been automatically synced.`,
     });
     setPlayerTag('');
     setLoading(false);
@@ -90,7 +109,7 @@ export function LinkClanCard() {
         <CardTitle>Link Your Clan</CardTitle>
         <CardDescription>
           Enter your Clash of Clans player tag to link your profile to your clan.
-          This will unlock clan-specific features.
+          This will unlock clan-specific features and automatically sync your role.
         </CardDescription>
       </CardHeader>
       <CardContent>

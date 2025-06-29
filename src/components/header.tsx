@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, Swords, Settings as SettingsIcon, Shield, MessageSquare, LogOut, User as UserIcon } from 'lucide-react';
+import { ProfileSwitcher } from './profile/ProfileSwitcher';
 import { cn } from '@/lib/utils';
 import { FriendRequestsDropdown } from './friend-requests-dropdown';
 import { Profile } from '@/lib/types';
@@ -115,6 +116,14 @@ export function Header() {
                                     Give Feedback
                                 </div>
                             </NavLink>
+                            {profile?.role && ['admin', 'leader', 'coLeader', 'elder'].includes(profile.role) && (
+                                <NavLink href="/dashboard/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                                    <div className="flex items-center text-muted-foreground">
+                                        <Shield className="w-4 h-4 mr-2" />
+                                        Admin Dashboard
+                                    </div>
+                                </NavLink>
+                            )}
                         </div>
                         <div className="mt-auto">
                            <form action="/auth/sign-out" method="post">
@@ -173,17 +182,19 @@ export function Header() {
                                 </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <ProfileSwitcher />
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                     <Link href={`/dashboard/members/${profile?.player_tag?.replace('#', '%23')}`} className="flex items-center cursor-pointer">
                                         <UserIcon className="w-4 h-4 mr-2" />
                                         <span>My Profile</span>
                                     </Link>
                                 </DropdownMenuItem>
-                                {profile?.role === 'admin' && (
+                                {profile?.role && ['admin', 'leader', 'coLeader', 'elder'].includes(profile.role) && (
                                     <DropdownMenuItem asChild>
-                                        <Link href="/dashboard/admin/invites" className="flex items-center cursor-pointer">
+                                        <Link href="/dashboard/admin" className="flex items-center cursor-pointer">
                                             <Shield className="w-4 h-4 mr-2" />
-                                            <span>Admin Panel</span>
+                                            <span>Admin Dashboard</span>
                                         </Link>
                                     </DropdownMenuItem>
                                 )}

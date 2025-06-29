@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { autoSyncUserRole } from '@/lib/auto-role-sync';
 
 export async function GET(request: Request) {
     const supabase = createClient();
@@ -16,6 +17,22 @@ export async function GET(request: Request) {
     if (error) {
         console.error('Error fetching profile', error);
         return new Response('Error fetching profile', { status: 500 });
+    }
+
+    // Check for active linked profile and merge it with main profile
+    const { data: activeLinkedProfile } = await supabase
+        .from('linked_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    // If there's an active linked profile, use its data for COC-related fields
+    if (activeLinkedProfile) {
+        profile.player_tag = activeLinkedProfile.player_tag;
+        profile.clan_tag = activeLinkedProfile.clan_tag;
+        profile.in_game_name = activeLinkedProfile.in_game_name;
+        profile.role = activeLinkedProfile.role;
     }
     
     // If player_tag exists but clan_tag is missing, try to auto-link
@@ -41,12 +58,71 @@ export async function GET(request: Request) {
                         .single();
                     
                     if (!updateError) {
-                        return NextResponse.json({ ...updatedProfile, email: user.email });
+                        // After auto-linking clan, try to sync role
+                        await autoSyncUserRole(user.id);
+                        
+                        // Re-fetch profile data including any linked profile updates
+                        const { data: finalProfile } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', user.id)
+                            .single();
+                        
+                        // Re-check for active linked profile after sync
+                        const { data: updatedActiveLinkedProfile } = await supabase
+                            .from('linked_profiles')
+                            .select('*')
+                            .eq('user_id', user.id)
+                            .eq('is_active', true)
+                            .single();
+
+                        if (updatedActiveLinkedProfile) {
+                            finalProfile.player_tag = updatedActiveLinkedProfile.player_tag;
+                            finalProfile.clan_tag = updatedActiveLinkedProfile.clan_tag;
+                            finalProfile.in_game_name = updatedActiveLinkedProfile.in_game_name;
+                            finalProfile.role = updatedActiveLinkedProfile.role;
+                        }
+                        
+                        return NextResponse.json({ ...finalProfile, email: user.email });
                     }
                 }
             }
         } catch (e) {
             console.error('Error during auto clan-linking:', e);
+        }
+    }
+
+    // Auto-sync role if user has both clan_tag and player_tag (using the merged profile data)
+    if (profile && profile.clan_tag && profile.player_tag) {
+        try {
+            const syncResult = await autoSyncUserRole(user.id);
+            if (syncResult.success && syncResult.updated) {
+                // If role was updated, re-fetch the profile data
+                const { data: updatedProfile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                // Re-check for active linked profile after sync
+                const { data: updatedActiveLinkedProfile } = await supabase
+                    .from('linked_profiles')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('is_active', true)
+                    .single();
+
+                if (updatedActiveLinkedProfile) {
+                    updatedProfile.player_tag = updatedActiveLinkedProfile.player_tag;
+                    updatedProfile.clan_tag = updatedActiveLinkedProfile.clan_tag;
+                    updatedProfile.in_game_name = updatedActiveLinkedProfile.in_game_name;
+                    updatedProfile.role = updatedActiveLinkedProfile.role;
+                }
+                
+                return NextResponse.json({ ...updatedProfile, email: user.email });
+            }
+        } catch (e) {
+            console.error('Error during auto role sync:', e);
         }
     }
 

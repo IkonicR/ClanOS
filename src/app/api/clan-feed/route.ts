@@ -28,11 +28,31 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
+    const feedType = searchParams.get('feed_type') || 'my-clan';
     const pageSize = 10;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    const { data: postsData, error } = await supabaseAdmin
+    // Get user's clan_tag for filtering (prioritizing active linked profile)
+    const { data: userProfile } = await supabaseServer
+        .from('profiles')
+        .select('clan_tag')
+        .eq('id', user.id)
+        .single();
+
+    // Check for active linked profile
+    const { data: activeLinkedProfile } = await supabaseServer
+        .from('linked_profiles')
+        .select('clan_tag')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    // Use active linked profile's clan_tag if available
+    const userClanTag = activeLinkedProfile?.clan_tag || userProfile?.clan_tag;
+
+    // Build the query based on feed type
+    let postsQuery = supabaseAdmin
         .from('posts')
         .select(`
             *,
@@ -43,7 +63,49 @@ export async function GET(request: Request) {
             ),
             likes(count),
             comments(count)
-        `)
+        `);
+
+    // Apply filtering based on feed type
+    if (feedType === 'my-clan') {
+        // Show only posts that were posted TO the clan feed (feed_type='clan' or 'my-clan')
+        // AND are from the user's clan
+        if (userClanTag) {
+            postsQuery = postsQuery
+                .in('feed_type', ['clan', 'my-clan'])
+                .eq('clan_tag', userClanTag);
+        } else {
+            // User has no clan, show no clan posts
+            postsQuery = postsQuery.eq('feed_type', 'NONEXISTENT');
+        }
+    } else if (feedType === 'global') {
+        // Show only posts that were posted TO the global feed
+        postsQuery = postsQuery.eq('feed_type', 'global');
+    } else if (feedType === 'group') {
+        // Show posts from allied/sister clans
+        if (userClanTag) {
+            // Get allied clans for this user's clan
+            const { data: alliedClans, error: alliedError } = await supabaseAdmin
+                .rpc('get_allied_clans', { input_clan_tag: userClanTag });
+            
+            const alliedClanTags = (alliedClans as any[])?.map((ac: any) => ac.allied_clan_tag) || [];
+            
+            if (alliedClanTags.length > 0) {
+                // Include user's own clan and allied clans
+                const allClanTags = [userClanTag, ...alliedClanTags];
+                postsQuery = postsQuery
+                    .eq('feed_type', 'group')
+                    .in('clan_tag', allClanTags);
+            } else {
+                // No allied clans, show no posts
+                postsQuery = postsQuery.eq('feed_type', 'NONEXISTENT');
+            }
+        } else {
+            // User has no clan, show no group posts
+            postsQuery = postsQuery.eq('feed_type', 'NONEXISTENT');
+        }
+    }
+
+        const { data: postsData, error } = await postsQuery
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -51,6 +113,9 @@ export async function GET(request: Request) {
         console.error('Error fetching posts:', error);
         return NextResponse.json({ error: 'Failed to fetch posts' }, { status: 500 });
     }
+
+
+
 
     const posts: PostResponse = postsData as any;
 
@@ -75,7 +140,7 @@ export async function GET(request: Request) {
         user_id: post.user_id,
         image_url: post.image_url,
         profiles: {
-            username: post.profiles?.in_game_name ?? 'Unknown User',
+            in_game_name: post.profiles?.in_game_name ?? 'Unknown User',
             avatar_url: post.profiles?.avatar_url ?? null,
         },
         like_count: post.likes[0]?.count || 0,
@@ -95,11 +160,51 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { content, image_url } = await request.json();
+    const { content, image_url, feed_type } = await request.json();
+
+    // Get user's clan_tag for posting (prioritizing active linked profile)
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('clan_tag')
+        .eq('id', user.id)
+        .single();
+
+    // Check for active linked profile
+    const { data: activeLinkedProfile } = await supabase
+        .from('linked_profiles')
+        .select('clan_tag')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    // Use active linked profile's clan_tag if available
+    const userClanTag = activeLinkedProfile?.clan_tag || userProfile?.clan_tag;
+
+    // Determine the feed_type and clan_tag based on the feed the user is posting to
+    let postFeedType = feed_type || 'clan'; // Default to clan feed for backward compatibility
+    let postClanTag = null;
+
+    if (postFeedType === 'my-clan' || postFeedType === 'clan') {
+        // For clan posts, set the clan_tag
+        postClanTag = userClanTag;
+        postFeedType = 'clan'; // Normalize to 'clan'
+    } else if (postFeedType === 'global') {
+        // Global posts don't need a clan_tag
+        postClanTag = null;
+    } else if (postFeedType === 'group') {
+        // Group posts will need group_tag in the future, for now use clan_tag
+        postClanTag = userClanTag;
+    }
 
     const { data: newPost, error } = await supabase
         .from('posts')
-        .insert({ content, user_id: user.id, image_url })
+        .insert({ 
+            content, 
+            user_id: user.id, 
+            image_url,
+            clan_tag: postClanTag,
+            feed_type: postFeedType
+        })
         .select(`
             id,
             content,
@@ -125,7 +230,7 @@ export async function POST(request: Request) {
         created_at: newPost.created_at,
         user_id: user.id,
         profiles: {
-            username: profile?.in_game_name ?? 'Unknown User',
+            in_game_name: profile?.in_game_name ?? 'Unknown User',
             avatar_url: profile?.avatar_url ?? null,
         },
         like_count: 0,

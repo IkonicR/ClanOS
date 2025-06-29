@@ -46,18 +46,30 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const playerTag = user.user_metadata?.playerTag;
-    if (!playerTag) {
-        return NextResponse.json({ error: 'Player tag not found for user' }, { status: 404 });
+    // Get user's clan_tag (prioritizing active linked profile)
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('clan_tag')
+        .eq('id', user.id)
+        .single();
+
+    // Check for active linked profile
+    const { data: activeLinkedProfile } = await supabase
+        .from('linked_profiles')
+        .select('clan_tag')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    // Use active linked profile's clan_tag if available
+    const clanTag = activeLinkedProfile?.clan_tag || userProfile?.clan_tag;
+    
+    if (!clanTag) {
+        return NextResponse.json({ error: 'User is not in a clan' }, { status: 404 });
     }
 
     try {
-        const playerInfo = await getPlayerInfo(playerTag);
-        if (!playerInfo.clan || !playerInfo.clan.tag) {
-             return NextResponse.json({ error: 'Player is not in a clan' }, { status: 404 });
-        }
-
-        const clanInfo = await getClanInfo(playerInfo.clan.tag);
+        const clanInfo = await getClanInfo(clanTag);
         const totalDonations = clanInfo.memberList.reduce((acc: number, member: any) => acc + member.donations, 0);
         const totalDonationsReceived = clanInfo.memberList.reduce((acc: number, member: any) => acc + member.donationsReceived, 0);
         const donationRatio = totalDonationsReceived > 0 ? (totalDonations / totalDonationsReceived) : 0;

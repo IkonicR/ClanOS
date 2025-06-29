@@ -11,15 +11,17 @@ import { Image as ImageIcon, X } from 'lucide-react';
 
 interface CreatePostProps {
     onCreatePost: (post: Post) => void;
+    feedType?: string;
 }
 
-const CreatePost = ({ onCreatePost }: CreatePostProps) => {
+const CreatePost = ({ onCreatePost, feedType = 'clan' }: CreatePostProps) => {
     const [content, setContent] = useState('');
     const [user, setUser] = useState<User | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const supabase = createClient();
 
@@ -40,17 +42,24 @@ const CreatePost = ({ onCreatePost }: CreatePostProps) => {
         fetchUserAndProfile();
     }, [supabase]);
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            setIsImageUploading(true);
             setImageFile(file);
-            setImagePreview(URL.createObjectURL(file));
+            
+            // Create preview after a short delay to show loading state
+            setTimeout(() => {
+                setImagePreview(URL.createObjectURL(file));
+                setIsImageUploading(false);
+            }, 300);
         }
     };
 
     const handleRemoveImage = () => {
         setImageFile(null);
         setImagePreview(null);
+        setIsImageUploading(false);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -101,7 +110,7 @@ const CreatePost = ({ onCreatePost }: CreatePostProps) => {
         const response = await fetch('/api/clan-feed', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content, image_url: imageUrl }),
+            body: JSON.stringify({ content, image_url: imageUrl, feed_type: feedType }),
         });
 
         if (response.ok) {
@@ -130,17 +139,29 @@ const CreatePost = ({ onCreatePost }: CreatePostProps) => {
                     rows={3}
                     className="focus:ring-0 resize-none"
                 />
-                {imagePreview && (
-                    <div className="relative">
-                        <img src={imagePreview} alt="Preview" className="rounded-lg max-h-60" />
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            className="absolute top-2 right-2 rounded-full w-6 h-6 p-0"
-                            onClick={handleRemoveImage}
-                        >
-                            <X className="w-4 h-4" />
-                        </Button>
+                {(imagePreview || isImageUploading) && (
+                    <div className="relative border-2 border-dashed border-gray-200 rounded-lg p-4">
+                        {isImageUploading ? (
+                            <div className="flex items-center justify-center h-32 bg-gray-50 rounded-lg">
+                                <div className="text-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                                    <p className="text-sm text-muted-foreground">Loading image...</p>
+                                </div>
+                            </div>
+                        ) : imagePreview ? (
+                            <>
+                                <img src={imagePreview} alt="Preview" className="rounded-lg max-h-60 w-full object-contain" />
+                                <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="absolute top-6 right-6 rounded-full w-8 h-8 p-0 shadow-lg"
+                                    onClick={handleRemoveImage}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </>
+                        ) : null}
                     </div>
                 )}
                 <div className="flex justify-between items-center">
@@ -149,9 +170,10 @@ const CreatePost = ({ onCreatePost }: CreatePostProps) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => fileInputRef.current?.click()}
+                        disabled={isImageUploading || isUploading}
                     >
                         <ImageIcon className="w-4 h-4 mr-2" />
-                        Photo/Video
+                        {isImageUploading ? 'Loading...' : 'Photo/Video'}
                     </Button>
                     <input
                         type="file"
@@ -160,7 +182,7 @@ const CreatePost = ({ onCreatePost }: CreatePostProps) => {
                         className="hidden"
                         accept="image/png, image/jpeg, image/gif"
                     />
-                    <Button type="submit" disabled={(!content.trim() && !imageFile) || isUploading}>
+                    <Button type="submit" disabled={(!content.trim() && !imageFile) || isUploading || isImageUploading}>
                         {isUploading ? 'Posting...' : 'Post'}
                     </Button>
                 </div>

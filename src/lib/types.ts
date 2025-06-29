@@ -7,7 +7,7 @@ export type Post = {
     image_url?: string | null;
     created_at: string;
     profiles: {
-      username: string | null;
+      in_game_name: string | null;
       avatar_url: string | null;
     } | null;
     like_count: number;
@@ -70,8 +70,22 @@ export interface Profile {
     clan_tag: string | null;
     banner_url: string | null;
     social_links: { [key: string]: string } | null;
-    role: 'admin' | 'user' | null;
+    role: 'admin' | 'user' | 'leader' | 'coLeader' | 'elder' | null;
     languages: string[] | null;
+    in_game_name: string | null;
+    active_profile_id: string | null;
+}
+
+export interface LinkedProfile {
+    id: string;
+    user_id: string;
+    player_tag: string;
+    clan_tag: string | null;
+    in_game_name: string | null;
+    role: 'admin' | 'user' | 'leader' | 'coLeader' | 'elder' | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface Clan {

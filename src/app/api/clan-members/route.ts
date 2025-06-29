@@ -27,7 +27,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // First, get the current user's own profile to find their clan tag
+    // First, get the current user's clan tag (prioritizing active linked profile)
     const { data: currentUserProfile, error: profileError } = await supabase
         .from('profiles')
         .select('clan_tag')
@@ -37,8 +37,17 @@ export async function GET() {
     if (profileError || !currentUserProfile) {
         return NextResponse.json({ error: 'Could not retrieve user profile.' }, { status: 500 });
     }
+
+    // Check for active linked profile
+    const { data: activeLinkedProfile } = await supabase
+        .from('linked_profiles')
+        .select('clan_tag')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
     
-    const clanTag = currentUserProfile.clan_tag;
+    // Use active linked profile's clan_tag if available, otherwise fall back to main profile
+    const clanTag = activeLinkedProfile?.clan_tag || currentUserProfile.clan_tag;
     if (!clanTag) {
         return NextResponse.json({ error: 'User is not in a clan.' }, { status: 404 });
     }

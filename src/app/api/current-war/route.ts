@@ -61,18 +61,29 @@ export async function GET() {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const playerTag = user.user_metadata?.playerTag;
-    if (!playerTag) {
-        return NextResponse.json({ error: 'Player tag not found for user' }, { status: 404 });
+    // Get user's clan_tag (prioritizing active linked profile)
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('clan_tag')
+        .eq('id', user.id)
+        .single();
+
+    // Check for active linked profile
+    const { data: activeLinkedProfile } = await supabase
+        .from('linked_profiles')
+        .select('clan_tag')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+    // Use active linked profile's clan_tag if available
+    const clanTag = activeLinkedProfile?.clan_tag || userProfile?.clan_tag;
+    
+    if (!clanTag) {
+        return NextResponse.json({ state: 'notInClan' }, { status: 200 });
     }
 
     try {
-        const clanTag = await getPlayerClanTag(playerTag);
-        
-        if (!clanTag) {
-             return NextResponse.json({ state: 'notInClan' }, { status: 200 });
-        }
-
         const warData = await getCurrentWar(clanTag);
         
         return NextResponse.json(warData);
