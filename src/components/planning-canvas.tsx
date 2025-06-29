@@ -4,6 +4,7 @@ import React from 'react';
 import { War, WarMember } from '@/lib/types';
 import { RoomProvider, ClientSideSuspense } from '@liveblocks/react';
 import 'tldraw/tldraw.css';
+import { useTheme } from 'next-themes'
 import {
 	Tldraw,
 	TLOnMountHandler,
@@ -24,6 +25,7 @@ type WarData = War;
 
 export function PlanningCanvas({ war, selectedBase, isReadOnly }: { war: WarData, selectedBase: WarMember, isReadOnly: boolean }) {
 	const roomId = `coc-war-room-${war.startTime}-${selectedBase.tag}`;
+	const { resolvedTheme } = useTheme();
 
 	const handleMount: TLOnMountHandler = (editor) => {
 		editor.updateInstanceState({ isReadonly: isReadOnly });
@@ -52,7 +54,7 @@ export function PlanningCanvas({ war, selectedBase, isReadOnly }: { war: WarData
 	}
 
 	return (
-		<div className="w-full h-full relative">
+		<div className="w-full h-full tldraw__editor" data-theme={resolvedTheme}>
 			<RoomProvider id={roomId} initialPresence={{}}>
 				<ClientSideSuspense fallback={<div className="flex items-center justify-center h-full text-foreground">Loading planning canvas...</div>}>
 					{() => (

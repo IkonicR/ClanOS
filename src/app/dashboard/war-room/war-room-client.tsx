@@ -5,7 +5,6 @@ import { Swords, Star, Target, Clock, ArrowLeft } from 'lucide-react';
 import { War, WarMember } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { useProfile } from '@/lib/hooks/useProfile';
 import { DefaultSizeStyle } from 'tldraw';
 import { Button } from '@/components/ui/button';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
@@ -69,7 +68,6 @@ export function WarRoomClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedBase, setSelectedBase] = useState<WarMember | null>(null);
-  const { profile, loading: profileLoading } = useProfile();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isLandscape = useMediaQuery("(orientation: landscape)");
   
@@ -121,11 +119,7 @@ export function WarRoomClient() {
     fetchWarData();
   }, []);
 
-  if (loading || profileLoading) {
-    return <WarRoomSkeleton />;
-  }
-  
-  if (error || !war || war.state === 'notInWar') {
+  if (loading || !war || war.state === 'notInWar') {
      return (
        <div className="bg-card/75 backdrop-blur-lg border border-border rounded-xl flex flex-col items-center justify-center p-16 text-center h-full">
         <div className="p-6 bg-primary/10 rounded-full mb-4">
@@ -141,7 +135,6 @@ export function WarRoomClient() {
 
   const { state, clan, opponent, teamSize, startTime, endTime } = war;
   const attacksRemaining = (teamSize * 2) - clan.attacks;
-  const isPlanner = profile?.role === 'admin' || profile?.role === 'leader' || profile?.role === 'coLeader';
 
   const renderTimers = () => {
     if (state === 'preparation') {
@@ -220,7 +213,7 @@ export function WarRoomClient() {
   const planningView = (
     <div className="flex-1 bg-background/20 relative">
       {selectedBase && war ? (
-          <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={!isPlanner} />
+          <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={false} />
       ) : (
         <div className="hidden lg:flex items-center justify-center h-full">
           <div className="text-center">
@@ -251,17 +244,10 @@ export function WarRoomClient() {
     if (selectedBase) {
       return (
         <div className="fixed inset-0 bg-background z-50">
-          <PlanningCanvas war={war} selectedBase={selectedBase} isReadOnly={!isPlanner} />
           <RotatePrompt onBack={handleExitCanvas} />
-          {isLandscape && (
-            <Button 
-              onClick={handleExitCanvas} 
-              className="absolute bottom-5 right-5 z-[1000] bg-primary hover:bg-primary/80"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Bases
-            </Button>
-          )}
+          <div className="w-full h-full">
+            <PlanningCanvas war={war as WarData} selectedBase={selectedBase} isReadOnly={false} />
+          </div>
         </div>
       );
     }
