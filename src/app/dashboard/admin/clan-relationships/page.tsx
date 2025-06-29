@@ -476,7 +476,7 @@ const ClanRelationshipsPage = () => {
               Sent Invites ({sentInvites.length})
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Invites you've sent that are waiting for a response.
+              Invites you&apos;ve sent that are waiting for a response.
             </p>
           </CardHeader>
           <CardContent>
