@@ -10,7 +10,7 @@ type PostResponse = {
     user_id: string;
     image_url: string | null;
     profiles: {
-      username: string | null;
+      in_game_name: string | null;
       avatar_url: string | null;
     } | null;
     likes: { count: number }[];
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
             *,
             image_url,
             profiles:profiles!posts_user_id_fkey (
-                username,
+                in_game_name,
                 avatar_url
             ),
             likes(count),
@@ -74,7 +74,10 @@ export async function GET(request: Request) {
         created_at: post.created_at,
         user_id: post.user_id,
         image_url: post.image_url,
-        profiles: post.profiles,
+        profiles: {
+            username: post.profiles?.in_game_name ?? 'Unknown User',
+            avatar_url: post.profiles?.avatar_url ?? null,
+        },
         like_count: post.likes[0]?.count || 0,
         user_has_liked_post: likedPostIds.has(post.id),
         comment_count: post.comments[0]?.count || 0,
@@ -103,7 +106,7 @@ export async function POST(request: Request) {
             created_at,
             image_url,
             profiles:profiles!posts_user_id_fkey (
-                username,
+                in_game_name,
                 avatar_url
             )
         `)
@@ -122,8 +125,8 @@ export async function POST(request: Request) {
         created_at: newPost.created_at,
         user_id: user.id,
         profiles: {
-            username: profile?.username ?? 'Unknown User',
-            avatar_url: profile?.avatar_url,
+            username: profile?.in_game_name ?? 'Unknown User',
+            avatar_url: profile?.avatar_url ?? null,
         },
         like_count: 0,
         user_has_liked_post: false,

@@ -78,13 +78,16 @@ const ClanFeedPage = () => {
                 async (payload) => {
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('username, avatar_url')
+                        .select('in_game_name, avatar_url')
                         .eq('id', payload.new.user_id)
                         .single();
 
                     const newPost = {
                         ...payload.new,
-                        profiles: profile,
+                        profiles: {
+                            username: profile?.in_game_name ?? 'Unknown User',
+                            avatar_url: profile?.avatar_url ?? null,
+                        },
                         like_count: 0,
                         user_has_liked_post: false,
                     } as Post;
