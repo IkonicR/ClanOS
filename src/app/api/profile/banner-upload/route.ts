@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient as createAdminClient } from '@/lib/supabase/admin';
 
 export async function POST(request: Request) {
   const supabase = createClient();
@@ -27,6 +27,7 @@ export async function POST(request: Request) {
 
   const filePath = `${user.id}/${Date.now()}-${bannerFile.name}`;
 
+  const supabaseAdmin = createAdminClient();
   const { error: uploadError } = await supabaseAdmin.storage
     .from('banners')
     .upload(filePath, bannerFile, {

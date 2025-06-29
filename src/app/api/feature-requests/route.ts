@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient as createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
@@ -40,6 +40,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
+    const supabaseAdmin = createAdminClient();
     const { data, error } = await supabaseAdmin
         .from('feature_requests')
         .insert({ title, description, category, email: user.email })
@@ -64,6 +65,7 @@ export async function PUT(request: Request) {
     if (!id) return NextResponse.json({ error: 'ID is required for updating' }, { status: 400 });
 
     // Verify the user owns this request before updating
+    const supabaseAdmin = createAdminClient();
     const { data: existing, error: fetchError } = await supabaseAdmin
         .from('feature_requests')
         .select('id, email')
@@ -102,6 +104,7 @@ export async function DELETE(request: Request) {
     if (!id) return NextResponse.json({ error: 'Request ID is required' }, { status: 400 });
 
     // Verify the user owns this request before deleting
+    const supabaseAdmin = createAdminClient();
     const { data: existing, error: fetchError } = await supabaseAdmin
         .from('feature_requests')
         .select('id, email')

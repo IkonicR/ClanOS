@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient as createAdminClient } from '@/lib/supabase/admin';
 
 async function getComment(supabase: any, commentId: string) {
     const { data, error } = await supabase
@@ -28,6 +28,7 @@ export async function PUT(
     if (fetchError || !comment) return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     if (comment.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    const supabaseAdmin = createAdminClient();
     const { data: updatedComment, error } = await supabaseAdmin
         .from('feature_request_comments')
         .update({ content, updated_at: new Date().toISOString() })
@@ -54,6 +55,7 @@ export async function DELETE(
     if (fetchError || !comment) return NextResponse.json({ error: 'Comment not found' }, { status: 404 });
     if (comment.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    const supabaseAdmin = createAdminClient();
     const { error } = await supabaseAdmin
         .from('feature_request_comments')
         .delete()

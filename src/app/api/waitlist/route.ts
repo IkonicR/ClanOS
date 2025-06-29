@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createClient } from '@/lib/supabase/admin';
 
 export async function POST(request: Request) {
   const { email } = await request.json();
@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const supabaseAdmin = createClient();
     // Diagnostic Step 1: Try to read from the table first.
     const { error: selectError } = await supabaseAdmin.from('waitlist').select('email').limit(1);
 
