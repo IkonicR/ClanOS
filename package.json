@@ -26,6 +26,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@radix-ui/react-toast": "^1.2.14",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.2",
     "class-variance-authority": "^0.7.1",
@@ -42,6 +43,7 @@
     "react-dom": "^18",
     "react-hook-form": "^7.58.1",
     "react-image-crop": "^11.0.10",
+    "react-intersection-observer": "^9.16.0",
     "react-tailwindcss-select": "^1.8.5",
     "swr": "^2.3.3",
     "tailwind-merge": "^2.6.0",
@@ -50,15 +52,14 @@
     "use-debounce": "^10.0.5",
     "zod": "^3.25.67"
   },
-  "resolutions": {
+  "overrides": {
     "@tldraw/editor": "3.13.3",
     "@tldraw/state": "3.13.3",
     "@tldraw/state-react": "3.13.3",
     "@tldraw/store": "3.13.3",
     "@tldraw/tlschema": "3.13.3",
     "@tldraw/utils": "3.13.3",
-    "@tldraw/validate": "3.13.3",
-    "tldraw": "3.13.3"
+    "@tldraw/validate": "3.13.3"
   },
   "devDependencies": {
     "@types/node": "^20",

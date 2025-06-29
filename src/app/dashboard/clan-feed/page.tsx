@@ -1,21 +1,56 @@
 'use client';
 
-import React, { useEffect, useState, useOptimistic } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { useInView } from 'react-intersection-observer';
 import CreatePost from '@/components/create-post';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Heart, Share } from 'lucide-react';
+import { MessageCircle, Heart, Share, MoreHorizontal } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
 import { Post } from '@/lib/types';
 import CommentSection from '@/components/comment-section';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 const ClanFeedPage = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState<User | null>(null);
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [editedContent, setEditedContent] = useState('');
+    const [page, setPage] = useState(1);
+    const [hasMorePosts, setHasMorePosts] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
     const supabase = createClient();
+    const { ref, inView } = useInView({
+        threshold: 0,
+        triggerOnce: false
+    });
+
+    const fetchPosts = async (pageNum: number, initialLoad = false) => {
+        if (isFetchingMore && !initialLoad) return;
+        if(initialLoad) setLoading(true);
+        setIsFetchingMore(true);
+
+        try {
+            const response = await fetch(`/api/clan-feed?page=${pageNum}`);
+            if (!response.ok) throw new Error('Failed to fetch posts');
+            
+            const newPosts = await response.json();
+            setPosts(prevPosts => pageNum === 1 ? newPosts : [...prevPosts, ...newPosts]);
+            setHasMorePosts(newPosts.length > 0);
+        } catch (error) {
+            console.error('Failed to fetch posts:', error);
+        } finally {
+            if(initialLoad) setLoading(false);
+            setIsFetchingMore(false);
+        }
+    };
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -23,79 +58,182 @@ const ClanFeedPage = () => {
             setUser(data.user);
         };
         fetchUser();
+        fetchPosts(1, true);
+    }, [supabase]);
 
-        const fetchPosts = async () => {
-            try {
-                const response = await fetch('/api/clan-feed');
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('API Error:', errorData);
-                    throw new Error('Failed to fetch posts');
-                }
-                const data = await response.json();
-                setPosts(data);
-            } catch (error) {
-                console.error('Failed to fetch posts:', error);
-                setPosts([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPosts();
-
-        const channel = supabase
-            .channel('realtime posts')
+    useEffect(() => {
+        if (inView && hasMorePosts && !isFetchingMore && !loading) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            fetchPosts(nextPage);
+        }
+    }, [inView, hasMorePosts, isFetchingMore, loading, page]);
+    
+    useEffect(() => {
+        const postsChannel = supabase.channel('realtime-posts');
+        postsChannel
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'posts' },
-                (payload) => {
-                    fetchPosts(); // Refetch posts on any change
-                }
-            )
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'likes' },
-                (payload) => {
-                    fetchPosts(); // Refetch posts on any change
+                { event: 'INSERT', schema: 'public', table: 'posts' },
+                async (payload) => {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('username, avatar_url')
+                        .eq('id', payload.new.user_id)
+                        .single();
+
+                    const newPost = {
+                        ...payload.new,
+                        profiles: profile,
+                        like_count: 0,
+                        user_has_liked_post: false,
+                    } as Post;
+                    setPosts(currentPosts => [newPost, ...currentPosts]);
                 }
             )
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'comments' },
+                { event: 'UPDATE', schema: 'public', table: 'posts' },
                 (payload) => {
-                    fetchPosts(); // Refetch posts on any change
+                    setPosts(currentPosts => currentPosts.map(p => {
+                        if (p.id === payload.new.id) {
+                            return { ...p, ...payload.new };
+                        }
+                        return p;
+                    }));
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'DELETE', schema: 'public', table: 'posts' },
+                (payload) => {
+                    setPosts(currentPosts => currentPosts.filter(p => p.id !== payload.old.id));
                 }
             )
             .subscribe();
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase]);
+        const likesChannel = supabase.channel('realtime-likes');
+        likesChannel.on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'likes' },
+            (payload) => {
+                setPosts(currentPosts => currentPosts.map(p => {
+                    if (p.id === payload.new.post_id) {
+                        if (payload.new.user_id === user?.id) return p;
+                        return { ...p, like_count: p.like_count + 1 };
+                    }
+                    return p;
+                }));
+            }
+        )
+        .on(
+            'postgres_changes',
+            { event: 'DELETE', schema: 'public', table: 'likes' },
+            (payload) => {
+                setPosts(currentPosts => currentPosts.map(p => {
+                    if (p.id === payload.old.post_id) {
+                        if (payload.old.user_id === user?.id) return p;
+                        return { ...p, like_count: p.like_count - 1 };
+                    }
+                    return p;
+                }));
+            }
+        )
+        .subscribe();
 
-    const [optimisticPosts, setOptimisticPosts] = useOptimistic(
-        posts,
-        (state: Post[], { postId, isLiked, likes }: { postId: string, isLiked: boolean, likes: number }) => {
-            return state.map(post =>
-                post.id === postId ? { ...post, user_has_liked_post: isLiked, like_count: likes } : post
-            );
+        const commentsChannel = supabase.channel('realtime-comments');
+        commentsChannel.on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'comments' },
+            (payload) => {
+                setPosts(currentPosts => currentPosts.map(p => {
+                    if (p.id === payload.new.post_id) {
+                        if (payload.new.user_id === user?.id) return p;
+                        return { ...p, comment_count: p.comment_count + 1 };
+                    }
+                    return p;
+                }));
+            }
+        ).subscribe();
+
+        return () => {
+            supabase.removeChannel(postsChannel);
+            supabase.removeChannel(likesChannel);
+            supabase.removeChannel(commentsChannel);
+        };
+    }, [supabase, user?.id]);
+
+    const handleEditClick = (post: Post) => {
+        setEditingPostId(post.id);
+        setEditedContent(post.content);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPostId(null);
+        setEditedContent('');
+    };
+
+    const handleUpdatePost = async (postId: string) => {
+        await fetch(`/api/posts/${postId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content: editedContent }),
+        });
+        setEditingPostId(null);
+        setEditedContent('');
+    };
+
+    const handleDeletePost = async (postId: string) => {
+        const response = await fetch(`/api/posts/${postId}`, {
+            method: 'DELETE',
+        });
+        if (response.ok) {
+            setPosts(currentPosts => currentPosts.filter(p => p.id !== postId));
         }
-    );
+    };
 
     const handleLikeToggle = async (post: Post) => {
-        const newIsLiked = !post.user_has_liked_post;
-        const newLikesCount = newIsLiked ? post.like_count + 1 : post.like_count - 1;
+        setPosts(currentPosts => currentPosts.map(p => {
+            if (p.id === post.id) {
+                return {
+                    ...p,
+                    like_count: p.user_has_liked_post ? p.like_count - 1 : p.like_count + 1,
+                    user_has_liked_post: !p.user_has_liked_post
+                };
+            }
+            return p;
+        }));
 
-        setOptimisticPosts({ postId: post.id, isLiked: newIsLiked, likes: newLikesCount });
+        const method = post.user_has_liked_post ? 'DELETE' : 'POST';
+        const response = await fetch(`/api/posts/${post.id}/like`, { method });
 
-        await fetch(`/api/posts/${post.id}/like`, {
-            method: newIsLiked ? 'POST' : 'DELETE',
-        });
+        if (!response.ok) {
+            setPosts(currentPosts => currentPosts.map(p => {
+                if (p.id === post.id) {
+                    return {
+                        ...p,
+                        like_count: post.like_count,
+                        user_has_liked_post: post.user_has_liked_post
+                    };
+                }
+                return p;
+            }));
+        }
     };
 
     const handleCreatePost = (newPost: Post) => {
-        setPosts([newPost, ...posts]);
+        setPosts(currentPosts => [newPost, ...currentPosts]);
+    };
+
+    const handleCommentPosted = (postId: string) => {
+        setPosts(currentPosts => currentPosts.map(p => {
+            if (p.id === postId) {
+                return { ...p, comment_count: p.comment_count + 1 };
+            }
+            return p;
+        }));
     };
 
     return (
@@ -106,20 +244,19 @@ const ClanFeedPage = () => {
             </div>
             {loading ? (
                 <div className="space-y-6">
-                    {/* Skeleton Loader */}
                     {[...Array(3)].map((_, i) => (
                         <Card key={i}>
                             <CardHeader className="flex flex-row items-center gap-4">
-                                <div className="w-10 h-10 bg-muted rounded-full animate-pulse" />
+                                <Skeleton className="h-10 w-10 rounded-full" />
                                 <div className="space-y-2">
-                                    <div className="h-4 bg-muted w-24 rounded animate-pulse" />
-                                    <div className="h-3 bg-muted w-32 rounded animate-pulse" />
+                                    <Skeleton className="h-4 w-[100px]" />
+                                    <Skeleton className="h-3 w-[150px]" />
                                 </div>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-2">
-                                    <div className="h-4 bg-muted w-full rounded animate-pulse" />
-                                    <div className="h-4 bg-muted w-5/6 rounded animate-pulse" />
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-5/6" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -127,52 +264,120 @@ const ClanFeedPage = () => {
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {optimisticPosts.map((post) => (
+                    {posts.map((post) => (
                         <Card key={post.id}>
                             <CardHeader className="flex flex-row items-center gap-4">
                                 <Avatar>
                                     <AvatarImage src={post.profiles?.avatar_url ?? undefined} />
-                                    <AvatarFallback>{post.profiles?.username.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>{post.profiles?.username?.charAt(0) ?? '?'}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{post.profiles?.username}</p>
+                                    <p className="font-semibold">{post.profiles?.username ?? 'Unknown User'}</p>
                                     <p className="text-sm text-muted-foreground">{new Date(post.created_at).toLocaleString()}</p>
                                 </div>
                                 {user?.id === post.user_id && (
                                     <div className="ml-auto">
-                                        {/* Add dropdown for edit/delete here */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm">
+                                                    <MoreHorizontal className="w-4 h-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => handleEditClick(post)}>Edit</DropdownMenuItem>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This action cannot be undone. This will permanently delete your post.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleDeletePost(post.id)}>Continue</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 )}
                             </CardHeader>
-                            <CardContent>
-                                <p>{post.content}</p>
+                            <CardContent className="pb-4">
+                                {editingPostId === post.id ? (
+                                    <div className="space-y-2">
+                                        <Textarea value={editedContent} onChange={(e) => setEditedContent(e.target.value)} className="w-full" />
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" onClick={handleCancelEdit}>Cancel</Button>
+                                            <Button onClick={() => handleUpdatePost(post.id)}>Save</Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+                                )}
+                                {post.image_url && (
+                                    <div className="mt-4">
+                                        <img 
+                                            src={`${post.image_url}?width=500`}
+                                            alt="Post image" 
+                                            className="max-h-[500px] w-full object-contain rounded-md"
+                                        />
+                                    </div>
+                                )}
                             </CardContent>
-                            <div className="border-t border-muted">
-                                <CommentSection post={post} />
+                            <div className="px-6 pb-4">
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                        <Heart className="w-4 h-4" />
+                                        <span>{post.like_count}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <MessageCircle className="w-4 h-4" />
+                                        <span>{post.comment_count} comments</span>
+                                    </div>
+                                </div>
                             </div>
-                            <CardFooter className="flex justify-between pt-4">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="flex items-center gap-2"
-                                    onClick={() => handleLikeToggle(post)}
-                                >
-                                    <Heart
-                                        className={`w-4 h-4 ${post.user_has_liked_post ? 'text-red-500 fill-current' : ''}`}
-                                    />
-                                    <span>{post.like_count}</span>
-                                </Button>
-                                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                                    <MessageCircle className="w-4 h-4" />
-                                    <span>Comment</span>
-                                </Button>
-                                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                                    <Share className="w-4 h-4" />
-                                    <span>Share</span>
-                                </Button>
+                            <Separator />
+                            <CardFooter className="py-2">
+                                <div className="flex w-full justify-around">
+                                    <Button variant="ghost" className="w-full" onClick={() => handleLikeToggle(post)}>
+                                        <Heart className={`w-5 h-5 mr-2 ${post.user_has_liked_post ? 'text-primary fill-current' : ''}`} />
+                                        Like
+                                    </Button>
+                                    <Button variant="ghost" className="w-full">
+                                        <MessageCircle className="w-5 h-5 mr-2" />
+                                        Comment
+                                    </Button>
+                                </div>
                             </CardFooter>
+                            <Separator />
+                            <CommentSection post={post} onCommentPosted={() => handleCommentPosted(post.id)} />
                         </Card>
                     ))}
+                    {isFetchingMore && (
+                        <div className="space-y-6">
+                            <Card>
+                                <CardHeader className="flex flex-row items-center gap-4">
+                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-[100px]" />
+                                        <Skeleton className="h-3 w-[150px]" />
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-4 w-5/6" />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+                    <div ref={ref} />
                 </div>
             )}
         </div>

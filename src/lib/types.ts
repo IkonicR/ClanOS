@@ -2,16 +2,18 @@ import { PostgrestError } from "@supabase/supabase-js";
 
 export type Post = {
     id: string;
-    content: string;
-    created_at: string;
     user_id: string;
+    content: string;
+    image_url?: string | null;
+    created_at: string;
     profiles: {
-      username: string;
+      username: string | null;
       avatar_url: string | null;
     } | null;
     like_count: number;
     user_has_liked_post: boolean;
-  };
+    comment_count: number;
+};
   
 export interface Comment {
     id: string;
@@ -22,7 +24,7 @@ export interface Comment {
     profiles: {
         username: string;
         avatar_url: string | null;
-    };
+    } | null;
 }
 
 export interface Member {
