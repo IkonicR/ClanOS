@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
           role: userRole,
           is_active: false // New profiles start as inactive
         })
-        .eq('id', existingLinkedProfile.id)
+        .eq('id', (existingLinkedProfile as any).id)
         .select()
         .single();
 
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
         in_game_name: null,
         role: 'user' // Downgrade role since they no longer have a COC account linked
       })
-      .eq('id', existingProfile.id);
+      .eq('id', (existingProfile as any).id);
 
     if (clearError) {
       console.error('Error clearing old account:', clearError);
