@@ -604,7 +604,7 @@ function CapitalProgressionAnalysis({ data }: { data: any }) {
                     <div className="text-center text-muted-foreground">
                         <Castle className="mx-auto h-12 w-12 mb-4 opacity-50" />
                         <p>Capital progression tracking coming soon</p>
-                        <p className="text-sm">We're working on advanced capital level tracking features</p>
+                        <p className="text-sm">We&apos;re working on advanced capital level tracking features</p>
                     </div>
                 </CardContent>
             </Card>
