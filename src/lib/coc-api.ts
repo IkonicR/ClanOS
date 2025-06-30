@@ -59,4 +59,9 @@ export async function getClanWarLog(clanTag: string) {
 export async function getCurrentWar(clanTag: string) {
     const encodedClanTag = encodeURIComponent(clanTag);
     return fetchCocApi(`/clans/${encodedClanTag}/currentwar`);
+}
+
+export async function getClanCapitalRaidSeasons(clanTag: string) {
+    const encodedClanTag = encodeURIComponent(clanTag);
+    return fetchCocApi(`/clans/${encodedClanTag}/capitalraidseasons`);
 } 
