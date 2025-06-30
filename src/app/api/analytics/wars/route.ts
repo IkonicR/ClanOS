@@ -40,8 +40,8 @@ export async function GET() {
         const wars = warLog?.items || [];
         const members = clanInfo?.memberList || [];
 
-        // Enhanced War Analytics with Player Performance
-        const analytics = generateAdvancedWarAnalytics(wars, members, currentWar);
+        // Generate comprehensive war analytics
+        const analytics = generateComprehensiveWarAnalytics(wars, members, currentWar);
 
         return NextResponse.json(analytics);
     } catch (error) {
@@ -51,66 +51,87 @@ export async function GET() {
     }
 }
 
-function generateAdvancedWarAnalytics(wars: any[], members: any[], currentWar: any) {
+function generateComprehensiveWarAnalytics(wars: any[], members: any[], currentWar: any) {
     // Ensure we have valid data arrays
     const validWars = Array.isArray(wars) ? wars.filter(war => war && typeof war === 'object') : [];
     const validMembers = Array.isArray(members) ? members.filter(member => member && typeof member === 'object') : [];
     
-    // Basic war statistics
-    const totalWars = validWars.length;
-    const wins = validWars.filter((war: any) => war.result === 'win').length;
-    const losses = validWars.filter((war: any) => war.result === 'lose').length;
-    const ties = validWars.filter((war: any) => war.result === 'tie').length;
-    const winRate = totalWars > 0 ? Number(((wins / totalWars) * 100).toFixed(1)) : 0;
-
-    // Player Performance Analysis
-    const playerPerformance = analyzePlayerWarPerformance(validWars, validMembers);
-    
-    // War Pattern Analysis
-    const warPatterns = analyzeWarPatterns(validWars);
-    
-    // Attack Success Analysis
-    const attackAnalysis = analyzeAttackSuccess(validWars);
-    
-    // Historical Trends
-    const historicalTrends = analyzeHistoricalTrends(validWars);
-    
-    // Current War Analysis
+    // Core analytics functions
+    const summary = generateWarSummary(validWars);
+    const memberPerformance = analyzeMemberWarPerformance(validWars, validMembers);
+    const attackHistories = generateMemberAttackHistories(validWars, validMembers);
+    const weeklyTrends = analyzeWeeklyWarTrends(validWars);
+    const attackPatterns = analyzeAdvancedAttackPatterns(validWars);
+    const competitiveAnalysis = analyzeCompetitivePerformance(validWars);
     const currentWarAnalysis = analyzeCurrentWar(currentWar);
-    
-    // Performance Predictions
-    const predictions = generateWarPredictions(validWars, playerPerformance);
+    const predictions = generateAdvancedPredictions(validWars, memberPerformance);
+    const strategicInsights = generateStrategicInsights(validWars, memberPerformance, attackPatterns);
 
     return {
-        summary: {
-            totalWars,
-            wins,
-            losses,
-            ties,
-            winRate,
-            perfectWars: warPatterns.perfectWars,
-            perfectWarRate: warPatterns.perfectWarRate,
-            averageStars: warPatterns.averageStars,
-            averageDestruction: warPatterns.averageDestruction
-        },
-        playerPerformance,
-        warPatterns,
-        attackAnalysis,
-        historicalTrends,
+        summary,
+        memberPerformance,
+        attackHistories,
+        weeklyTrends,
+        attackPatterns,
+        competitiveAnalysis,
         currentWar: currentWarAnalysis,
         predictions,
+        strategicInsights,
         recentWars: analyzeRecentWars(validWars.slice(0, 10)),
         lastUpdated: new Date().toISOString()
     };
 }
 
-function analyzePlayerWarPerformance(wars: any[], members: any[]) {
-    const playerStats: { [key: string]: any } = {};
-    let totalWarParticipations = 0;
+// ===== CORE ANALYTICS FUNCTIONS =====
 
-    // Initialize player stats
+function generateWarSummary(wars: any[]) {
+    const totalWars = wars.length;
+    const wins = wars.filter(w => w.result === 'win').length;
+    const losses = wars.filter(w => w.result === 'lose').length;
+    const ties = wars.filter(w => w.result === 'tie').length;
+    const winRate = totalWars > 0 ? Number(((wins / totalWars) * 100).toFixed(1)) : 0;
+
+    // Perfect wars analysis
+    const perfectWars = wars.filter(w => {
+        const maxStars = w.teamSize ? w.teamSize * 3 : 0;
+        return w.clan?.stars === maxStars && maxStars > 0;
+    }).length;
+    const perfectWarRate = totalWars > 0 ? Number(((perfectWars / totalWars) * 100).toFixed(1)) : 0;
+
+    // Recent form (last 10 wars)
+    const recentWars = wars.slice(0, 10);
+    const recentWins = recentWars.filter(w => w.result === 'win').length;
+    const recentWinRate = recentWars.length > 0 ? Number(((recentWins / recentWars.length) * 100).toFixed(1)) : 0;
+
+    // Performance metrics
+    const totalStars = wars.reduce((sum, w) => sum + (w.clan?.stars || 0), 0);
+    const totalDestruction = wars.reduce((sum, w) => sum + (w.clan?.destructionPercentage || 0), 0);
+    const averageStars = totalWars > 0 ? Number((totalStars / totalWars).toFixed(1)) : 0;
+    const averageDestruction = totalWars > 0 ? Number((totalDestruction / totalWars).toFixed(1)) : 0;
+
+    return {
+        totalWars,
+        wins,
+        losses,
+        ties,
+        winRate,
+        recentWinRate,
+        perfectWars,
+        perfectWarRate,
+        averageStars,
+        averageDestruction,
+        streak: calculateCurrentStreak(wars),
+        longestWinStreak: calculateLongestStreak(wars, 'win'),
+        form: calculateWarForm(recentWars)
+    };
+}
+
+function analyzeMemberWarPerformance(wars: any[], members: any[]) {
+    const memberStats: { [key: string]: any } = {};
+    
+    // Initialize member stats
     members.forEach(member => {
-        playerStats[member.tag] = {
+        memberStats[member.tag] = {
             name: member.name,
             tag: member.tag,
             role: member.role,
@@ -127,28 +148,43 @@ function analyzePlayerWarPerformance(wars: any[], members: any[]) {
                 avgDestructionPerAttack: 0,
                 successRate: 0,
                 consistencyScore: 0,
-                improvement: 0
+                improvement: 0,
+                clutchAttacks: 0,
+                cleanupAttacks: 0,
+                firstAttacks: 0,
+                secondAttacks: 0
             },
-            recentForm: []
+            recentForm: [],
+            attackPatterns: {
+                preferredTargets: [],
+                attackTiming: [],
+                positionAnalysis: {}
+            },
+            historicalTrends: {
+                last4Weeks: [],
+                last12Weeks: [],
+                performance: 'stable'
+            }
         };
     });
 
-    // Analyze war performances
-    wars.slice(0, 20).forEach((war, warIndex) => {
+    // Analyze each war
+    wars.slice(0, 30).forEach((war, warIndex) => {
         if (!war.clan?.members) return;
         
         war.clan.members.forEach((member: any) => {
             const playerTag = member.tag;
-            if (!playerStats[playerTag]) return;
+            if (!memberStats[playerTag]) return;
 
-            const stats = playerStats[playerTag].warStats;
+            const stats = memberStats[playerTag].warStats;
+            const patterns = memberStats[playerTag].attackPatterns;
+            
             stats.warsParticipated++;
-            totalWarParticipations++;
 
             // Analyze each attack
             if (member.attacks && Array.isArray(member.attacks)) {
-                member.attacks.forEach((attack: any) => {
-                    if (!attack) return; // Skip null attacks
+                member.attacks.forEach((attack: any, attackIndex: number) => {
+                    if (!attack) return;
                     
                     const stars = attack.stars || 0;
                     const destruction = attack.destructionPercentage || 0;
@@ -157,33 +193,77 @@ function analyzePlayerWarPerformance(wars: any[], members: any[]) {
                     stats.starsEarned += stars;
                     stats.totalDestruction += destruction;
 
-                    // Perfect attack (3 stars or 100% destruction)
+                    // Attack classification
                     if (stars === 3 || destruction === 100) {
                         stats.perfectAttacks++;
                     }
-
-                    // Failed attack (0 stars and low destruction)
                     if (stars === 0 && destruction < 50) {
                         stats.failedAttacks++;
                     }
+                    if (attackIndex === 0) {
+                        stats.firstAttacks++;
+                    } else {
+                        stats.secondAttacks++;
+                    }
 
-                    // Track recent form (last 10 wars)
-                    if (warIndex < 10) {
-                        playerStats[playerTag].recentForm.push({
-                            warIndex,
-                            stars: stars,
-                            destruction: destruction,
-                            position: member.mapPosition || 0
+                    // Clutch attack detection (3 stars when needed)
+                    const warResult = war.result;
+                    if (stars === 3 && (warResult === 'win' || warResult === 'tie')) {
+                        stats.clutchAttacks++;
+                    }
+
+                    // Track attack patterns
+                    if (attack.defenderTag) {
+                        patterns.preferredTargets.push({
+                            defenderTag: attack.defenderTag,
+                            stars,
+                            destruction,
+                            warIndex
                         });
+                    }
+
+                    // Recent form tracking (last 12 wars)
+                    if (warIndex < 12) {
+                        memberStats[playerTag].recentForm.push({
+                            warIndex,
+                            stars,
+                            destruction,
+                            position: member.mapPosition || 0,
+                            attackNumber: attackIndex + 1,
+                            warResult: war.result,
+                            warEndTime: war.endTime
+                        });
+                    }
+
+                    // Weekly trends (group by weeks)
+                    if (warIndex < 12 && war.endTime) {
+                        const warDate = new Date(war.endTime);
+                        if (!isNaN(warDate.getTime())) {
+                            const weekIndex = Math.floor(warIndex / 2); // Roughly 2 wars per week
+                            if (!memberStats[playerTag].historicalTrends.last12Weeks[weekIndex]) {
+                                memberStats[playerTag].historicalTrends.last12Weeks[weekIndex] = {
+                                    week: weekIndex + 1,
+                                    attacks: 0,
+                                    stars: 0,
+                                    destruction: 0,
+                                    perfectAttacks: 0
+                                };
+                            }
+                            const weekData = memberStats[playerTag].historicalTrends.last12Weeks[weekIndex];
+                            weekData.attacks++;
+                            weekData.stars += stars;
+                            weekData.destruction += destruction;
+                            if (stars === 3) weekData.perfectAttacks++;
+                        }
                     }
                 });
             }
         });
     });
 
-    // Calculate derived statistics
-    Object.keys(playerStats).forEach(playerTag => {
-        const stats = playerStats[playerTag].warStats;
+    // Calculate derived statistics for each member
+    Object.keys(memberStats).forEach(playerTag => {
+        const stats = memberStats[playerTag].warStats;
         
         if (stats.totalAttacks > 0) {
             stats.avgStarsPerAttack = Number((stats.starsEarned / stats.totalAttacks).toFixed(2));
@@ -191,258 +271,521 @@ function analyzePlayerWarPerformance(wars: any[], members: any[]) {
             stats.successRate = Number(((stats.perfectAttacks / stats.totalAttacks) * 100).toFixed(1));
         }
 
-        // Calculate consistency score (based on variance in performance)
-        const recentForm = playerStats[playerTag].recentForm;
-        if (recentForm.length > 3) {
-            const starAvg = recentForm.reduce((sum: number, attack: any) => sum + attack.stars, 0) / recentForm.length;
-            const variance = recentForm.reduce((sum: number, attack: any) => sum + Math.pow(attack.stars - starAvg, 2), 0) / recentForm.length;
-            stats.consistencyScore = Number((100 - (variance * 20)).toFixed(1)); // Convert to 0-100 scale
+        // Calculate consistency score
+        const recentForm = memberStats[playerTag].recentForm;
+        if (recentForm.length >= 4) {
+            const starValues = recentForm.map((f: any) => f.stars);
+            const avg = starValues.reduce((sum: number, val: number) => sum + val, 0) / starValues.length;
+            const variance = starValues.reduce((sum: number, val: number) => sum + Math.pow(val - avg, 2), 0) / starValues.length;
+            stats.consistencyScore = Math.max(0, Number((100 - (variance * 25)).toFixed(1)));
         }
 
-        // Calculate improvement trend (recent vs older performance)
-        if (recentForm.length >= 6) {
-            const recentAvg = recentForm.slice(0, 3).reduce((sum: number, attack: any) => sum + attack.stars, 0) / 3;
-            const olderAvg = recentForm.slice(3, 6).reduce((sum: number, attack: any) => sum + attack.stars, 0) / 3;
-            stats.improvement = Number(((recentAvg - olderAvg) * 100).toFixed(1));
+        // Calculate improvement trend
+        if (recentForm.length >= 8) {
+            const recentPerf = recentForm.slice(0, 4).reduce((sum: number, f: any) => sum + f.stars, 0) / 4;
+            const olderPerf = recentForm.slice(4, 8).reduce((sum: number, f: any) => sum + f.stars, 0) / 4;
+            stats.improvement = Number(((recentPerf - olderPerf) * 100).toFixed(1));
+        }
+
+        // Calculate weekly trends averages
+        const weeklyData = memberStats[playerTag].historicalTrends.last12Weeks;
+        weeklyData.forEach((week: any) => {
+            if (week && week.attacks > 0) {
+                week.avgStars = Number((week.stars / week.attacks).toFixed(2));
+                week.avgDestruction = Number((week.destruction / week.attacks).toFixed(1));
+                week.successRate = Number(((week.perfectAttacks / week.attacks) * 100).toFixed(1));
+            }
+        });
+
+        // Determine performance trend
+        if (weeklyData.length >= 4) {
+            const recentWeeks = weeklyData.slice(0, 2).filter((w: any) => w && w.attacks > 0);
+            const olderWeeks = weeklyData.slice(2, 4).filter((w: any) => w && w.attacks > 0);
+            
+            if (recentWeeks.length > 0 && olderWeeks.length > 0) {
+                const recentAvg = recentWeeks.reduce((sum: number, w: any) => sum + w.avgStars, 0) / recentWeeks.length;
+                const olderAvg = olderWeeks.reduce((sum: number, w: any) => sum + w.avgStars, 0) / olderWeeks.length;
+                const diff = recentAvg - olderAvg;
+                
+                memberStats[playerTag].historicalTrends.performance = 
+                    diff > 0.3 ? 'improving' : diff < -0.3 ? 'declining' : 'stable';
+            }
         }
     });
 
-    // Filter out players with no war participation and sort by performance
-    const activeWarriors = Object.values(playerStats)
+    // Filter and categorize active warriors
+    const activeWarriors = Object.values(memberStats)
         .filter((player: any) => player.warStats.warsParticipated > 0)
         .sort((a: any, b: any) => b.warStats.avgStarsPerAttack - a.warStats.avgStarsPerAttack);
-
-    // Top and bottom performers
-    const topPerformers = activeWarriors.slice(0, 5);
-    const strugglingPlayers = activeWarriors
-        .filter((player: any) => player.warStats.totalAttacks >= 5)
-        .slice(-5);
 
     // Performance tiers
     const eliteWarriors = activeWarriors.filter((player: any) => 
         player.warStats.avgStarsPerAttack >= 2.5 && player.warStats.warsParticipated >= 5
     );
     const reliableWarriors = activeWarriors.filter((player: any) => 
-        player.warStats.avgStarsPerAttack >= 2.0 && player.warStats.avgStarsPerAttack < 2.5
+        player.warStats.avgStarsPerAttack >= 2.0 && player.warStats.avgStarsPerAttack < 2.5 && player.warStats.warsParticipated >= 3
     );
     const improvingWarriors = activeWarriors.filter((player: any) => 
-        player.warStats.improvement > 20 && player.warStats.warsParticipated >= 3
+        player.warStats.improvement > 25 && player.warStats.warsParticipated >= 3
+    );
+    const consistentWarriors = activeWarriors.filter((player: any) => 
+        player.warStats.consistencyScore >= 80 && player.warStats.warsParticipated >= 5
     );
 
     return {
         overview: {
             totalActiveWarriors: activeWarriors.length,
-            averageParticipationRate: totalWarParticipations > 0 ? Number(((totalWarParticipations / wars.length) / members.length * 100).toFixed(1)) : 0,
             eliteCount: eliteWarriors.length,
             reliableCount: reliableWarriors.length,
-            improvingCount: improvingWarriors.length
+            improvingCount: improvingWarriors.length,
+            consistentCount: consistentWarriors.length,
+            averageParticipationRate: calculateParticipationRate(activeWarriors, wars.length)
         },
-        topPerformers,
-        strugglingPlayers,
+        topPerformers: activeWarriors.slice(0, 8),
+        strugglingWarriors: activeWarriors.filter(p => p.warStats.totalAttacks >= 8).slice(-5),
         performanceTiers: {
             elite: eliteWarriors,
             reliable: reliableWarriors,
-            improving: improvingWarriors
+            improving: improvingWarriors,
+            consistent: consistentWarriors
         },
-        allPlayers: activeWarriors
+        allWarriors: activeWarriors
     };
 }
 
-function analyzeWarPatterns(wars: any[]) {
-    let totalStars = 0;
-    let totalDestruction = 0;
-    let perfectWars = 0;
-    let closeWars = 0;
-    let dominantWins = 0;
-    let crushingDefeats = 0;
-
-    const warSizeDistribution: { [key: number]: number } = {};
-    const opponentLevels: number[] = [];
-
-    wars.forEach(war => {
-        if (!war || !war.clan || !war.opponent) return;
-
-        const ourStars = war.clan.stars || 0;
-        const theirStars = war.opponent.stars || 0;
-        const ourDestruction = war.clan.destructionPercentage || 0;
-        const maxStars = war.teamSize ? war.teamSize * 3 : 0;
-
-        totalStars += ourStars;
-        totalDestruction += ourDestruction;
-
-        // Perfect war (all 3 stars)
-        if (ourStars === maxStars) perfectWars++;
-
-        // Close wars (star difference <= 3)
-        const starDifference = Math.abs(ourStars - theirStars);
-        if (starDifference <= 3) closeWars++;
-
-        // Dominant wins (won by 10+ stars)
-        if (war.result === 'win' && (ourStars - theirStars) >= 10) dominantWins++;
-
-        // Crushing defeats (lost by 10+ stars)
-        if (war.result === 'lose' && (theirStars - ourStars) >= 10) crushingDefeats++;
-
-        // War size tracking
-        warSizeDistribution[war.teamSize] = (warSizeDistribution[war.teamSize] || 0) + 1;
-
-        // Opponent strength tracking
-        if (war.opponent.clanLevel) {
-            opponentLevels.push(war.opponent.clanLevel);
-        }
-    });
-
-    const avgOpponentLevel = opponentLevels.length > 0 ? 
-        Number((opponentLevels.reduce((sum, level) => sum + level, 0) / opponentLevels.length).toFixed(1)) : 0;
-
-    return {
-        averageStars: wars.length > 0 ? Number((totalStars / wars.length).toFixed(1)) : 0,
-        averageDestruction: wars.length > 0 ? Number((totalDestruction / wars.length).toFixed(1)) : 0,
-        perfectWars,
-        perfectWarRate: wars.length > 0 ? Number(((perfectWars / wars.length) * 100).toFixed(1)) : 0,
-        closeWars,
-                 dominantWins,
-         crushingDefeats,
-         warSizeDistribution,
-         avgOpponentLevel,
-         competitiveness: {
-            closeWarRate: wars.length > 0 ? Number(((closeWars / wars.length) * 100).toFixed(1)) : 0,
-            dominanceRate: wars.length > 0 ? Number(((dominantWins / wars.length) * 100).toFixed(1)) : 0
-        }
-    };
-}
-
-function analyzeAttackSuccess(wars: any[]) {
-    let totalAttacks = 0;
-    let perfectAttacks = 0;
-    let goodAttacks = 0; // 2+ stars
-    let failedAttacks = 0; // 0 stars
+function generateMemberAttackHistories(wars: any[], members: any[]) {
+    const histories: { [key: string]: any } = {};
     
-    const attacksByPosition: { [key: number]: { attempts: number, success: number, stars: number } } = {};
-    const attackPatterns: { [key: string]: number } = {};
-
-    wars.slice(0, 15).forEach(war => {
-        if (!war.clan?.members) return;
-
-        war.clan.members.forEach((member: any) => {
-            if (!member.attacks) return;
-
-            member.attacks.forEach((attack: any) => {
-                totalAttacks++;
-                
-                if (attack.stars === 3) perfectAttacks++;
-                else if (attack.stars >= 2) goodAttacks++;
-                else if (attack.stars === 0) failedAttacks++;
-
-                // Track attacks by map position
-                const position = member.mapPosition;
-                if (!attacksByPosition[position]) {
-                    attacksByPosition[position] = { attempts: 0, success: 0, stars: 0 };
-                }
-                attacksByPosition[position].attempts++;
-                attacksByPosition[position].stars += attack.stars;
-                if (attack.stars >= 2) attacksByPosition[position].success++;
-
-                // Attack patterns (who attacks whom)
-                const attackerPos = member.mapPosition;
-                const defenderPos = attack.defenderTag; // This might need adjustment based on API
-                const pattern = `${attackerPos}vs${defenderPos}`;
-                attackPatterns[pattern] = (attackPatterns[pattern] || 0) + 1;
-            });
-        });
-    });
-
-    const successRate = totalAttacks > 0 ? Number(((perfectAttacks / totalAttacks) * 100).toFixed(1)) : 0;
-    const goodAttackRate = totalAttacks > 0 ? Number((((perfectAttacks + goodAttacks) / totalAttacks) * 100).toFixed(1)) : 0;
-
-    return {
-        overall: {
-            totalAttacks,
-            perfectAttacks,
-            goodAttacks,
-            failedAttacks,
-            successRate,
-            goodAttackRate,
-            averageStarsPerAttack: totalAttacks > 0 ? Number(((perfectAttacks * 3 + goodAttacks * 2) / totalAttacks).toFixed(2)) : 0
-        },
-        byPosition: Object.entries(attacksByPosition).map(([position, stats]) => ({
-            position: parseInt(position),
-            attempts: stats.attempts,
-            successRate: stats.attempts > 0 ? Number(((stats.success / stats.attempts) * 100).toFixed(1)) : 0,
-            avgStars: stats.attempts > 0 ? Number((stats.stars / stats.attempts).toFixed(2)) : 0
-        })).sort((a, b) => a.position - b.position)
-    };
-}
-
-function analyzeHistoricalTrends(wars: any[]) {
-    const monthlyData: { [key: string]: any } = {};
-    const now = new Date();
-    
-    // Initialize last 6 months
-    for (let i = 5; i >= 0; i--) {
-        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const monthKey = date.toISOString().substring(0, 7);
-        monthlyData[monthKey] = {
-            month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-            wars: 0,
-            wins: 0,
-            losses: 0,
-            ties: 0,
-            stars: 0,
-            destruction: 0,
-            winRate: 0,
-            avgStars: 0,
-            trend: 'stable'
+    members.forEach(member => {
+        histories[member.tag] = {
+            name: member.name,
+            tag: member.tag,
+            attacks: [],
+            statistics: {
+                totalAttacks: 0,
+                starDistribution: { 0: 0, 1: 0, 2: 0, 3: 0 },
+                destructionRanges: {
+                    '0-25': 0, '25-50': 0, '50-75': 0, '75-99': 0, '100': 0
+                },
+                attackPositions: {},
+                monthlyPerformance: {}
+            }
         };
-    }
+    });
 
-    wars.forEach((war: any) => {
-        if (!war.endTime) return;
+    wars.slice(0, 25).forEach((war, warIndex) => {
+        if (!war.clan?.members || !war.endTime) return;
         
         const warDate = new Date(war.endTime);
         if (isNaN(warDate.getTime())) return;
         
         const monthKey = warDate.toISOString().substring(0, 7);
         
-        if (monthlyData[monthKey]) {
-            const data = monthlyData[monthKey];
+        war.clan.members.forEach((member: any) => {
+            if (!histories[member.tag]) return;
+            
+            const history = histories[member.tag];
+            
+            if (member.attacks && Array.isArray(member.attacks)) {
+                member.attacks.forEach((attack: any, attackIndex: number) => {
+                    if (!attack) return;
+                    
+                    const attackData = {
+                        warIndex,
+                        warDate: war.endTime,
+                        warResult: war.result,
+                        teamSize: war.teamSize,
+                        attackNumber: attackIndex + 1,
+                        stars: attack.stars || 0,
+                        destruction: attack.destructionPercentage || 0,
+                        defenderTag: attack.defenderTag,
+                        position: member.mapPosition || 0,
+                        opponent: {
+                            name: war.opponent?.name || 'Unknown',
+                            level: war.opponent?.clanLevel || 0
+                        }
+                    };
+                    
+                    history.attacks.push(attackData);
+                    history.statistics.totalAttacks++;
+                    
+                    // Update distributions
+                    const stars = attackData.stars;
+                    history.statistics.starDistribution[stars]++;
+                    
+                    const destruction = attackData.destruction;
+                    if (destruction === 100) {
+                        history.statistics.destructionRanges['100']++;
+                    } else if (destruction >= 75) {
+                        history.statistics.destructionRanges['75-99']++;
+                    } else if (destruction >= 50) {
+                        history.statistics.destructionRanges['50-75']++;
+                    } else if (destruction >= 25) {
+                        history.statistics.destructionRanges['25-50']++;
+                    } else {
+                        history.statistics.destructionRanges['0-25']++;
+                    }
+                    
+                    // Position tracking
+                    const pos = attackData.position;
+                    if (!history.statistics.attackPositions[pos]) {
+                        history.statistics.attackPositions[pos] = { attacks: 0, stars: 0 };
+                    }
+                    history.statistics.attackPositions[pos].attacks++;
+                    history.statistics.attackPositions[pos].stars += stars;
+                    
+                    // Monthly performance
+                    if (!history.statistics.monthlyPerformance[monthKey]) {
+                        history.statistics.monthlyPerformance[monthKey] = {
+                            attacks: 0, stars: 0, destruction: 0, perfectAttacks: 0
+                        };
+                    }
+                    const monthData = history.statistics.monthlyPerformance[monthKey];
+                    monthData.attacks++;
+                    monthData.stars += stars;
+                    monthData.destruction += destruction;
+                    if (stars === 3) monthData.perfectAttacks++;
+                });
+            }
+        });
+    });
+
+    // Calculate averages and trends for each member
+    Object.keys(histories).forEach(tag => {
+        const history = histories[tag];
+        
+        // Position performance
+        Object.keys(history.statistics.attackPositions).forEach(pos => {
+            const posData = history.statistics.attackPositions[pos];
+            posData.avgStars = posData.attacks > 0 ? Number((posData.stars / posData.attacks).toFixed(2)) : 0;
+        });
+        
+        // Monthly averages
+        Object.keys(history.statistics.monthlyPerformance).forEach(month => {
+            const monthData = history.statistics.monthlyPerformance[month];
+            if (monthData.attacks > 0) {
+                monthData.avgStars = Number((monthData.stars / monthData.attacks).toFixed(2));
+                monthData.avgDestruction = Number((monthData.destruction / monthData.attacks).toFixed(1));
+                monthData.successRate = Number(((monthData.perfectAttacks / monthData.attacks) * 100).toFixed(1));
+            }
+        });
+    });
+
+    return Object.values(histories).filter((h: any) => h.statistics.totalAttacks > 0);
+}
+
+function analyzeWeeklyWarTrends(wars: any[]) {
+    const weeklyData: { [key: string]: any } = {};
+    const now = new Date();
+    
+    // Initialize last 12 weeks
+    for (let i = 11; i >= 0; i--) {
+        const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (i * 7));
+        const weekKey = getWeekKey(weekStart);
+        weeklyData[weekKey] = {
+            week: `Week ${12 - i}`,
+            weekStart: weekStart.toISOString(),
+            wars: 0,
+            wins: 0,
+            losses: 0,
+            ties: 0,
+            totalStars: 0,
+            totalDestruction: 0,
+            perfectWars: 0,
+            attacks: 0,
+            avgStars: 0,
+            avgDestruction: 0,
+            winRate: 0,
+            performance: 'neutral'
+        };
+    }
+    
+    wars.forEach((war: any) => {
+        if (!war.endTime) return;
+        
+        const warDate = new Date(war.endTime);
+        if (isNaN(warDate.getTime())) return;
+        
+        const weekKey = getWeekKey(warDate);
+        
+        if (weeklyData[weekKey]) {
+            const data = weeklyData[weekKey];
             data.wars++;
+            
             if (war.result === 'win') data.wins++;
             else if (war.result === 'lose') data.losses++;
             else data.ties++;
-            data.stars += war.clan?.stars || 0;
-            data.destruction += war.clan?.destructionPercentage || 0;
+            
+            data.totalStars += war.clan?.stars || 0;
+            data.totalDestruction += war.clan?.destructionPercentage || 0;
+            
+            // Count perfect wars
+            const maxStars = war.teamSize ? war.teamSize * 3 : 0;
+            if (war.clan?.stars === maxStars && maxStars > 0) {
+                data.perfectWars++;
+            }
+            
+            // Count total attacks
+            if (war.clan?.members) {
+                war.clan.members.forEach((member: any) => {
+                    if (member.attacks) {
+                        data.attacks += member.attacks.length;
+                    }
+                });
+            }
         }
     });
 
     // Calculate averages and trends
-    const months = Object.keys(monthlyData).sort();
-    months.forEach((month, index) => {
-        const data = monthlyData[month];
+    const weeks = Object.keys(weeklyData).sort();
+    weeks.forEach((week, index) => {
+        const data = weeklyData[week];
         if (data.wars > 0) {
             data.winRate = Number(((data.wins / data.wars) * 100).toFixed(1));
-            data.avgStars = Number((data.stars / data.wars).toFixed(1));
-            data.avgDestruction = Number((data.destruction / data.wars).toFixed(1));
-
-            // Calculate trend compared to previous month
+            data.avgStars = Number((data.totalStars / data.wars).toFixed(1));
+            data.avgDestruction = Number((data.totalDestruction / data.wars).toFixed(1));
+            
+            // Performance trend
             if (index > 0) {
-                const prevMonth = monthlyData[months[index - 1]];
-                if (prevMonth.wars > 0) {
-                    const winRateDiff = data.winRate - prevMonth.winRate;
-                    data.trend = winRateDiff > 5 ? 'improving' : winRateDiff < -5 ? 'declining' : 'stable';
+                const prevWeek = weeklyData[weeks[index - 1]];
+                if (prevWeek.wars > 0) {
+                    const winRateDiff = data.winRate - prevWeek.winRate;
+                    data.performance = winRateDiff > 10 ? 'improving' : winRateDiff < -10 ? 'declining' : 'stable';
                 }
             }
         }
     });
 
     return {
-        monthlyPerformance: Object.values(monthlyData),
+        weeklyPerformance: Object.values(weeklyData),
         trends: {
-            overallTrend: calculateOverallTrend(Object.values(monthlyData)),
-            bestMonth: findBestMonth(Object.values(monthlyData)),
-            worstMonth: findWorstMonth(Object.values(monthlyData))
+            overallTrend: calculateOverallWarTrend(Object.values(weeklyData)),
+            bestWeek: findBestWeek(Object.values(weeklyData)),
+            worstWeek: findWorstWeek(Object.values(weeklyData)),
+            consistency: calculateWeeklyConsistency(Object.values(weeklyData))
         }
     };
+}
+
+function analyzeAdvancedAttackPatterns(wars: any[]) {
+    const patterns = {
+        attackTiming: { early: 0, mid: 0, late: 0 },
+        positionTargeting: {},
+        mirrorAttacks: 0,
+        upAttacks: 0,
+        downAttacks: 0,
+        cleanupAttacks: 0,
+        starSecuring: { onestar: 0, twostar: 0, threestar: 0 },
+        townHallTargeting: {},
+        attackOrder: { first: 0, second: 0 },
+        successByTiming: { early: { attempts: 0, successes: 0 }, mid: { attempts: 0, successes: 0 }, late: { attempts: 0, successes: 0 } }
+    };
+
+    wars.slice(0, 20).forEach(war => {
+        if (!war.clan?.members) return;
+        
+        const totalMembers = war.teamSize || war.clan.members.length;
+        
+        war.clan.members.forEach((member: any) => {
+            if (!member.attacks) return;
+            
+            member.attacks.forEach((attack: any, attackIndex: number) => {
+                if (!attack) return;
+                
+                const position = member.mapPosition || 0;
+                const stars = attack.stars || 0;
+                
+                // Attack order
+                if (attackIndex === 0) patterns.attackOrder.first++;
+                else patterns.attackOrder.second++;
+                
+                // Star securing patterns
+                if (stars === 1) patterns.starSecuring.onestar++;
+                else if (stars === 2) patterns.starSecuring.twostar++;
+                else if (stars === 3) patterns.starSecuring.threestar++;
+                
+                // Position-based analysis (mirror, up, down attacks)
+                // This would need defender position to be fully accurate
+                // For now, we'll estimate based on attack order in war
+                const estimatedDefenderPosition = position; // Simplified
+                
+                if (estimatedDefenderPosition === position) {
+                    patterns.mirrorAttacks++;
+                } else if (estimatedDefenderPosition > position) {
+                    patterns.downAttacks++;
+                } else {
+                    patterns.upAttacks++;
+                }
+            });
+        });
+    });
+
+    return patterns;
+}
+
+function analyzeCompetitivePerformance(wars: any[]) {
+    const analysis = {
+        opponentAnalysis: {
+            levels: {},
+            sizes: {},
+            strengthComparison: { stronger: 0, similar: 0, weaker: 0 }
+        },
+        closeWars: [],
+        dominantPerformances: [],
+        underperformances: [],
+        clutchWins: [],
+        missedOpportunities: []
+    };
+
+    wars.forEach(war => {
+        if (!war.opponent || !war.clan) return;
+        
+        const ourStars = war.clan.stars || 0;
+        const theirStars = war.opponent.stars || 0;
+        const starDiff = ourStars - theirStars;
+        const ourDestruction = war.clan.destructionPercentage || 0;
+        const theirDestruction = war.opponent.destructionPercentage || 0;
+        
+        // Opponent level tracking
+        const opponentLevel = war.opponent.clanLevel || 0;
+        analysis.opponentAnalysis.levels[opponentLevel] = (analysis.opponentAnalysis.levels[opponentLevel] || 0) + 1;
+        
+        // War size tracking
+        const warSize = war.teamSize || 0;
+        analysis.opponentAnalysis.sizes[warSize] = (analysis.opponentAnalysis.sizes[warSize] || 0) + 1;
+        
+        // Strength comparison (simplified)
+        // Could be enhanced with actual clan strength metrics
+        if (opponentLevel > 15) analysis.opponentAnalysis.strengthComparison.stronger++;
+        else if (opponentLevel < 10) analysis.opponentAnalysis.strengthComparison.weaker++;
+        else analysis.opponentAnalysis.strengthComparison.similar++;
+        
+        // War outcome analysis
+        if (Math.abs(starDiff) <= 3) {
+            analysis.closeWars.push({ ...war, starDiff, destructionDiff: ourDestruction - theirDestruction });
+        }
+        
+        if (war.result === 'win' && starDiff >= 10) {
+            analysis.dominantPerformances.push(war);
+        }
+        
+        if (war.result === 'lose' && starDiff <= -10) {
+            analysis.underperformances.push(war);
+        }
+        
+        if (war.result === 'win' && Math.abs(starDiff) <= 2) {
+            analysis.clutchWins.push(war);
+        }
+        
+        if (war.result === 'lose' && starDiff >= -3) {
+            analysis.missedOpportunities.push(war);
+        }
+    });
+
+    return analysis;
+}
+
+// ===== HELPER FUNCTIONS =====
+
+function calculateCurrentStreak(wars: any[]) {
+    if (wars.length === 0) return { type: 'none', count: 0 };
+    
+    const firstResult = wars[0].result;
+    let count = 0;
+    
+    for (const war of wars) {
+        if (war.result === firstResult) {
+            count++;
+        } else {
+            break;
+        }
+    }
+    
+    return { type: firstResult, count };
+}
+
+function calculateLongestStreak(wars: any[], type: string) {
+    let longest = 0;
+    let current = 0;
+    
+    wars.forEach(war => {
+        if (war.result === type) {
+            current++;
+            longest = Math.max(longest, current);
+        } else {
+            current = 0;
+        }
+    });
+    
+    return longest;
+}
+
+function calculateWarForm(recentWars: any[]) {
+    const formPoints = recentWars.reduce((points, war) => {
+        if (war.result === 'win') return points + 3;
+        if (war.result === 'tie') return points + 1;
+        return points;
+    }, 0);
+    
+    const maxPoints = recentWars.length * 3;
+    const formPercentage = maxPoints > 0 ? (formPoints / maxPoints) * 100 : 0;
+    
+    if (formPercentage >= 80) return 'excellent';
+    if (formPercentage >= 60) return 'good';
+    if (formPercentage >= 40) return 'average';
+    return 'poor';
+}
+
+function calculateParticipationRate(activeWarriors: any[], totalWars: number) {
+    if (activeWarriors.length === 0 || totalWars === 0) return 0;
+    
+    const totalParticipations = activeWarriors.reduce((sum, warrior) => sum + warrior.warStats.warsParticipated, 0);
+    const maxPossibleParticipations = activeWarriors.length * totalWars;
+    
+    return maxPossibleParticipations > 0 ? Number(((totalParticipations / maxPossibleParticipations) * 100).toFixed(1)) : 0;
+}
+
+function getWeekKey(date: Date) {
+    const year = date.getFullYear();
+    const week = Math.floor((date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    return `${year}-W${week}`;
+}
+
+function calculateOverallWarTrend(weeklyData: any[]) {
+    const validWeeks = weeklyData.filter(w => w.wars > 0);
+    if (validWeeks.length < 3) return 'insufficient_data';
+    
+    const recent = validWeeks.slice(-3);
+    const older = validWeeks.slice(0, 3);
+    
+    const recentAvg = recent.reduce((sum, w) => sum + w.winRate, 0) / recent.length;
+    const olderAvg = older.reduce((sum, w) => sum + w.winRate, 0) / older.length;
+    
+    const diff = recentAvg - olderAvg;
+    return diff > 10 ? 'improving' : diff < -10 ? 'declining' : 'stable';
+}
+
+function findBestWeek(weeklyData: any[]) {
+    const validWeeks = weeklyData.filter(w => w.wars > 0);
+    return validWeeks.reduce((best, current) => 
+        current.winRate > best.winRate ? current : best, validWeeks[0] || null);
+}
+
+function findWorstWeek(weeklyData: any[]) {
+    const validWeeks = weeklyData.filter(w => w.wars > 0);
+    return validWeeks.reduce((worst, current) => 
+        current.winRate < worst.winRate ? current : worst, validWeeks[0] || null);
+}
+
+function calculateWeeklyConsistency(weeklyData: any[]) {
+    const validWeeks = weeklyData.filter(w => w.wars > 0);
+    if (validWeeks.length < 3) return 0;
+    
+    const winRates = validWeeks.map(w => w.winRate);
+    const avg = winRates.reduce((sum, rate) => sum + rate, 0) / winRates.length;
+    const variance = winRates.reduce((sum, rate) => sum + Math.pow(rate - avg, 2), 0) / winRates.length;
+    
+    return Math.max(0, Number((100 - Math.sqrt(variance)).toFixed(1)));
 }
 
 function analyzeCurrentWar(currentWar: any) {
@@ -452,7 +795,6 @@ function analyzeCurrentWar(currentWar: any) {
 
     const ourClan = currentWar.clan;
     const opponent = currentWar.opponent;
-    const maxStars = currentWar.teamSize * 3;
     
     const totalAttacksUsed = ourClan.attacks || 0;
     const maxPossibleAttacks = currentWar.teamSize * 2;
@@ -461,8 +803,6 @@ function analyzeCurrentWar(currentWar: any) {
     const starDifference = ourClan.stars - opponent.stars;
     const destructionDifference = ourClan.destructionPercentage - opponent.destructionPercentage;
     
-    // Win probability calculation
-    const starsNeeded = Math.max(0, (opponent.stars + 1) - ourClan.stars);
     const winProbability = calculateWinProbability(starDifference, destructionDifference, attacksRemaining);
 
     return {
@@ -489,22 +829,18 @@ function analyzeCurrentWar(currentWar: any) {
             starDifference,
             destructionDifference: Number(destructionDifference.toFixed(1)),
             isWinning: starDifference > 0 || (starDifference === 0 && destructionDifference > 0),
-            starsNeeded,
             winProbability
         }
     };
 }
 
-function generateWarPredictions(wars: any[], playerPerformance: any) {
+function generateAdvancedPredictions(wars: any[], memberPerformance: any) {
     if (wars.length < 5) return null;
 
     const recentWinRate = wars.slice(0, 10).filter(w => w.result === 'win').length / Math.min(10, wars.length) * 100;
     const overallWinRate = wars.filter(w => w.result === 'win').length / wars.length * 100;
     
-    // Momentum calculation
     const momentum = recentWinRate - overallWinRate;
-    
-    // Form analysis
     const recentForm = wars.slice(0, 5).map(w => w.result);
     const formScore = recentForm.reduce((score, result) => {
         return score + (result === 'win' ? 20 : result === 'tie' ? 10 : 0);
@@ -515,21 +851,45 @@ function generateWarPredictions(wars: any[], playerPerformance: any) {
         momentum: momentum > 5 ? 'positive' : momentum < -5 ? 'negative' : 'neutral',
         formScore,
         formRating: formScore >= 80 ? 'excellent' : formScore >= 60 ? 'good' : formScore >= 40 ? 'average' : 'poor',
-        recommendedStrategy: generateStrategyRecommendation(playerPerformance, recentWinRate),
-        confidence: Math.min(wars.length * 10, 90)
+        confidence: Math.min(wars.length * 8, 85)
     };
+}
+
+function generateStrategicInsights(wars: any[], memberPerformance: any, attackPatterns: any) {
+    const insights = [];
+    
+    // Analyze attack timing
+    if (attackPatterns.successByTiming) {
+        const earlySuccess = attackPatterns.successByTiming.early.attempts > 0 ? 
+            (attackPatterns.successByTiming.early.successes / attackPatterns.successByTiming.early.attempts) * 100 : 0;
+        const lateSuccess = attackPatterns.successByTiming.late.attempts > 0 ? 
+            (attackPatterns.successByTiming.late.successes / attackPatterns.successByTiming.late.attempts) * 100 : 0;
+        
+        if (earlySuccess > lateSuccess + 10) {
+            insights.push('Early attacks show higher success rates - encourage quicker war engagement');
+        }
+    }
+    
+    // Member performance insights
+    if (memberPerformance.performanceTiers.improving.length > 3) {
+        insights.push('Strong improvement trend detected - current training methods are effective');
+    }
+    
+    if (memberPerformance.strugglingWarriors.length > 2) {
+        insights.push('Consider focused training for struggling members to improve overall war performance');
+    }
+    
+    return insights;
 }
 
 function analyzeRecentWars(recentWars: any[]) {
     return recentWars.map(war => {
-        // More robust validation
         if (!war || !war.clan || !war.opponent) return null;
         
         const ourClan = war.clan;
         const opponent = war.opponent;
         const maxStars = war.teamSize ? war.teamSize * 3 : 0;
         
-        // Handle missing or null values
         const ourStars = ourClan.stars || 0;
         const ourAttacks = ourClan.attacks || 0;
         const ourDestruction = ourClan.destructionPercentage || 0;
@@ -541,7 +901,7 @@ function analyzeRecentWars(recentWars: any[]) {
         
         return {
             endTime: war.endTime || null,
-            result: war.result || 'unknown', // Provide default value
+            result: war.result || 'unknown',
             teamSize: war.teamSize || 0,
             opponent: {
                 name: opponent.name || 'Unknown Clan',
@@ -564,37 +924,12 @@ function analyzeRecentWars(recentWars: any[]) {
     }).filter(war => war !== null);
 }
 
-// Helper functions
-function calculateOverallTrend(monthlyData: any[]) {
-    const validMonths = monthlyData.filter(m => m.wars > 0);
-    if (validMonths.length < 2) return 'insufficient_data';
-    
-    const recent = validMonths.slice(-2);
-    const older = validMonths.slice(0, 2);
-    
-    if (recent.length === 0 || older.length === 0) return 'insufficient_data';
-    
-    const recentAvg = recent.reduce((sum, m) => sum + m.winRate, 0) / recent.length;
-    const olderAvg = older.reduce((sum, m) => sum + m.winRate, 0) / older.length;
-    
-    const diff = recentAvg - olderAvg;
-    return diff > 10 ? 'improving' : diff < -10 ? 'declining' : 'stable';
-}
-
-function findBestMonth(monthlyData: any[]) {
-    const validMonths = monthlyData.filter(m => m.wars > 0);
-    return validMonths.reduce((best, current) => 
-        current.winRate > best.winRate ? current : best, validMonths[0] || null);
-}
-
-function findWorstMonth(monthlyData: any[]) {
-    const validMonths = monthlyData.filter(m => m.wars > 0);
-    return validMonths.reduce((worst, current) => 
-        current.winRate < worst.winRate ? current : worst, validMonths[0] || null);
-}
-
 function calculateTimeRemaining(endTime: string) {
+    if (!endTime) return 'Unknown';
+    
     const end = new Date(endTime);
+    if (isNaN(end.getTime())) return 'Invalid';
+    
     const now = new Date();
     const diff = end.getTime() - now.getTime();
     
@@ -607,33 +942,14 @@ function calculateTimeRemaining(endTime: string) {
 }
 
 function calculateWinProbability(starDiff: number, destructionDiff: number, attacksRemaining: number) {
-    let probability = 50; // Base 50%
+    let probability = 50;
     
-    // Adjust for current star difference
-    probability += starDiff * 10;
+    probability += starDiff * 8;
+    probability += destructionDiff * 0.15;
     
-    // Adjust for destruction difference
-    probability += destructionDiff * 0.2;
-    
-    // Adjust for remaining attacks
-    if (attacksRemaining > 5) probability += 15;
-    else if (attacksRemaining > 2) probability += 5;
-    else if (attacksRemaining === 0) probability -= 20;
+    if (attacksRemaining > 8) probability += 20;
+    else if (attacksRemaining > 4) probability += 10;
+    else if (attacksRemaining === 0) probability -= 25;
     
     return Math.max(5, Math.min(95, Math.round(probability)));
-}
-
-function generateStrategyRecommendation(playerPerformance: any, winRate: number) {
-    if (winRate > 75) {
-        return 'Maintain current strategy - excellent performance';
-    } else if (winRate > 50) {
-        return 'Focus on attack timing and coordination';
-    } else {
-        const strugglingCount = playerPerformance.strugglingPlayers?.length || 0;
-        if (strugglingCount > 3) {
-            return 'Consider member training and strategic repositioning';
-        } else {
-            return 'Review attack strategies and base layouts';
-        }
-    }
 } 

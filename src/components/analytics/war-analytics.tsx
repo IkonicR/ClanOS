@@ -41,13 +41,14 @@ export function WarAnalytics({ data, isLoading, onRefresh }: WarAnalyticsProps) 
         );
     }
 
-    const filteredPlayers = data.playerPerformance?.allPlayers
+    const filteredPlayers = data.memberPerformance?.allWarriors
         ?.filter((player: any) => 
             player.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
             (filterTier === 'all' || 
              (filterTier === 'elite' && player.warStats.avgStarsPerAttack >= 2.5) ||
              (filterTier === 'reliable' && player.warStats.avgStarsPerAttack >= 2.0 && player.warStats.avgStarsPerAttack < 2.5) ||
-             (filterTier === 'improving' && player.warStats.improvement > 20))
+             (filterTier === 'improving' && player.warStats.improvement > 25) ||
+             (filterTier === 'consistent' && player.warStats.consistencyScore >= 80))
         )
         ?.sort((a: any, b: any) => {
             if (sortBy === 'avgStarsPerAttack') return b.warStats.avgStarsPerAttack - a.warStats.avgStarsPerAttack;
@@ -55,6 +56,7 @@ export function WarAnalytics({ data, isLoading, onRefresh }: WarAnalyticsProps) 
             if (sortBy === 'successRate') return b.warStats.successRate - a.warStats.successRate;
             if (sortBy === 'consistencyScore') return b.warStats.consistencyScore - a.warStats.consistencyScore;
             if (sortBy === 'improvement') return b.warStats.improvement - a.warStats.improvement;
+            if (sortBy === 'clutchAttacks') return b.warStats.clutchAttacks - a.warStats.clutchAttacks;
             return 0;
         }) || [];
 
@@ -73,30 +75,34 @@ export function WarAnalytics({ data, isLoading, onRefresh }: WarAnalyticsProps) 
                     }}
                 />
                 <MetricCard
-                    title="Perfect Wars"
-                    value={data.summary?.perfectWars || 0}
+                    title="Win Streak"
+                    value={data.summary?.streak?.count || 0}
                     icon={<Star className="h-4 w-4" />}
                     change={{
                         value: data.summary?.perfectWarRate || 0,
-                        type: data.summary?.perfectWarRate > 20 ? 'increase' : 'neutral',
-                        period: '% of wars'
+                        type: data.summary?.streak?.type === 'win' ? 'increase' : data.summary?.streak?.type === 'lose' ? 'decrease' : 'neutral',
+                        period: data.summary?.streak?.type || 'neutral'
                     }}
                 />
                 <MetricCard
                     title="Active Warriors"
-                    value={data.playerPerformance?.overview?.totalActiveWarriors || 0}
+                    value={data.memberPerformance?.overview?.totalActiveWarriors || 0}
                     icon={<Users className="h-4 w-4" />}
                     change={{
-                        value: data.playerPerformance?.overview?.averageParticipationRate || 0,
+                        value: data.memberPerformance?.overview?.averageParticipationRate || 0,
                         type: 'neutral',
                         period: '% participation'
                     }}
                 />
                 <MetricCard
                     title="Elite Warriors"
-                    value={data.playerPerformance?.overview?.eliteCount || 0}
+                    value={data.memberPerformance?.overview?.eliteCount || 0}
                     icon={<Award className="h-4 w-4" />}
-                    suffix=" elite"
+                    change={{
+                        value: data.memberPerformance?.overview?.consistentCount || 0,
+                        type: 'neutral',
+                        period: ' consistent'
+                    }}
                 />
             </StatsGrid>
 
@@ -131,17 +137,42 @@ export function WarAnalytics({ data, isLoading, onRefresh }: WarAnalyticsProps) 
             )}
 
             <Tabs defaultValue="performance" className="space-y-4">
-                <TabsList className="grid w-full grid-cols-5">
-                    <TabsTrigger value="performance">Player Performance</TabsTrigger>
-                    <TabsTrigger value="patterns">War Patterns</TabsTrigger>
-                    <TabsTrigger value="attacks">Attack Analysis</TabsTrigger>
-                    <TabsTrigger value="trends">Historical Trends</TabsTrigger>
-                    <TabsTrigger value="recent">Recent Wars</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-6 max-w-4xl mx-auto">
+                    <TabsTrigger value="performance" className="hidden sm:flex">
+                        <Users className="h-4 w-4 mr-1 hidden sm:block" />
+                        <span className="hidden sm:inline">Member Performance</span>
+                        <Users className="h-4 w-4 sm:hidden" />
+                    </TabsTrigger>
+                    <TabsTrigger value="histories" className="hidden sm:flex">
+                        <Clock className="h-4 w-4 mr-1 hidden sm:block" />
+                        <span className="hidden sm:inline">Attack Histories</span>
+                        <Clock className="h-4 w-4 sm:hidden" />
+                    </TabsTrigger>
+                    <TabsTrigger value="trends" className="hidden sm:flex">
+                        <TrendingUp className="h-4 w-4 mr-1 hidden sm:block" />
+                        <span className="hidden sm:inline">Weekly Trends</span>
+                        <TrendingUp className="h-4 w-4 sm:hidden" />
+                    </TabsTrigger>
+                    <TabsTrigger value="patterns" className="hidden sm:flex">
+                        <Target className="h-4 w-4 mr-1 hidden sm:block" />
+                        <span className="hidden sm:inline">Attack Patterns</span>
+                        <Target className="h-4 w-4 sm:hidden" />
+                    </TabsTrigger>
+                    <TabsTrigger value="competitive" className="hidden sm:flex">
+                        <Shield className="h-4 w-4 mr-1 hidden sm:block" />
+                        <span className="hidden sm:inline">Competitive</span>
+                        <Shield className="h-4 w-4 sm:hidden" />
+                    </TabsTrigger>
+                    <TabsTrigger value="recent" className="hidden sm:flex">
+                        <Star className="h-4 w-4 mr-1 hidden sm:block" />
+                        <span className="hidden sm:inline">Recent Wars</span>
+                        <Star className="h-4 w-4 sm:hidden" />
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="performance" className="space-y-6">
-                    <PlayerPerformanceAnalysis 
-                        data={data.playerPerformance}
+                    <MemberPerformanceAnalysis 
+                        data={data.memberPerformance}
                         searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}
                         sortBy={sortBy}
@@ -152,16 +183,20 @@ export function WarAnalytics({ data, isLoading, onRefresh }: WarAnalyticsProps) 
                     />
                 </TabsContent>
 
-                <TabsContent value="patterns" className="space-y-6">
-                    <WarPatternsAnalysis data={data.warPatterns} />
-                </TabsContent>
-
-                <TabsContent value="attacks" className="space-y-6">
-                    <AttackAnalysis data={data.attackAnalysis} />
+                <TabsContent value="histories" className="space-y-6">
+                    <MemberAttackHistories data={data.attackHistories} />
                 </TabsContent>
 
                 <TabsContent value="trends" className="space-y-6">
-                    <HistoricalTrends data={data.historicalTrends} />
+                    <WeeklyWarTrends data={data.weeklyTrends} />
+                </TabsContent>
+
+                <TabsContent value="patterns" className="space-y-6">
+                    <AdvancedAttackPatterns data={data.attackPatterns} />
+                </TabsContent>
+
+                <TabsContent value="competitive" className="space-y-6">
+                    <CompetitiveAnalysis data={data.competitiveAnalysis} />
                 </TabsContent>
 
                 <TabsContent value="recent" className="space-y-6">
@@ -322,7 +357,7 @@ function WarPredictions({ predictions }: { predictions: any }) {
     );
 }
 
-function PlayerPerformanceAnalysis({ 
+function MemberPerformanceAnalysis({ 
     data, 
     searchTerm, 
     setSearchTerm, 
@@ -849,6 +884,189 @@ function RecentWarsAnalysis({ data }: { data: any }) {
                     </CardContent>
                 </Card>
             ))}
+        </div>
+    );
+}
+
+// New comprehensive component placeholders
+function MemberAttackHistories({ data }: { data: any }) {
+    if (!data) return <div>No attack history data available</div>;
+    
+    return (
+        <div className="space-y-6">
+            <SectionHeader title="Member Attack Histories" description="Detailed attack tracking and statistics for each member" />
+            <div className="text-center text-muted-foreground py-8">
+                <Clock className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>Comprehensive attack histories coming soon...</p>
+            </div>
+        </div>
+    );
+}
+
+function WeeklyWarTrends({ data }: { data: any }) {
+    if (!data) return <div>No weekly trends data available</div>;
+    
+    return (
+        <div className="space-y-6">
+            <SectionHeader title="12-Week War Trends" description="Weekly performance patterns and trends analysis" />
+            
+            {data.weeklyPerformance && (
+                <LineChartComponent
+                    title="Weekly Win Rate Trends"
+                    data={data.weeklyPerformance}
+                    xKey="week"
+                    lines={[
+                        { key: "winRate", name: "Win Rate", color: "#3b82f6" },
+                        { key: "avgStars", name: "Avg Stars", color: "#10b981" }
+                    ]}
+                    height={300}
+                />
+            )}
+        </div>
+    );
+}
+
+function AdvancedAttackPatterns({ data }: { data: any }) {
+    if (!data) return <div>No attack patterns data available</div>;
+    
+    return (
+        <div className="space-y-6">
+            <SectionHeader title="Advanced Attack Patterns" description="Deep analysis of attack strategies and patterns" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Attack Order</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span>First Attacks:</span>
+                                <span className="font-bold text-emerald-600">{data.attackOrder?.first || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Second Attacks:</span>
+                                <span className="font-bold text-blue-600">{data.attackOrder?.second || 0}</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Star Distribution</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span>3-Star Attacks:</span>
+                                <span className="font-bold text-yellow-600">{data.starSecuring?.threestar || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>2-Star Attacks:</span>
+                                <span className="font-bold text-orange-600">{data.starSecuring?.twostar || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>1-Star Attacks:</span>
+                                <span className="font-bold text-red-600">{data.starSecuring?.onestar || 0}</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Attack Types</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span>Mirror Attacks:</span>
+                                <span className="font-bold text-green-600">{data.mirrorAttacks || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Up Attacks:</span>
+                                <span className="font-bold text-blue-600">{data.upAttacks || 0}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Down Attacks:</span>
+                                <span className="font-bold text-purple-600">{data.downAttacks || 0}</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    );
+}
+
+function CompetitiveAnalysis({ data }: { data: any }) {
+    if (!data) return <div>No competitive analysis data available</div>;
+    
+    return (
+        <div className="space-y-6">
+            <SectionHeader title="Competitive Performance" description="Analysis against different opponent types and strengths" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">War Outcomes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm">Close Wars</span>
+                                    <span className="text-sm font-bold">{data.closeWars?.length || 0}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">Star difference ≤ 3</div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm">Dominant Wins</span>
+                                    <span className="text-sm font-bold text-green-600">{data.dominantPerformances?.length || 0}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">Won by 10+ stars</div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm">Clutch Wins</span>
+                                    <span className="text-sm font-bold text-yellow-600">{data.clutchWins?.length || 0}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">Won by ≤ 2 stars</div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-lg">Opponent Strength</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm">vs Stronger</span>
+                                    <span className="text-sm font-bold text-red-600">{data.opponentAnalysis?.strengthComparison?.stronger || 0}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm">vs Similar</span>
+                                    <span className="text-sm font-bold text-yellow-600">{data.opponentAnalysis?.strengthComparison?.similar || 0}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm">vs Weaker</span>
+                                    <span className="text-sm font-bold text-green-600">{data.opponentAnalysis?.strengthComparison?.weaker || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
