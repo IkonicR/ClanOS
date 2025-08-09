@@ -25,7 +25,6 @@ export async function GET(request: NextRequest, { params }: { params: { provider
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      flowType: 'pkce',
       // Use a clean callback URL; we'll decide the final destination in the callback
       redirectTo: `${appUrl}/auth/callback`,
       queryParams: {
