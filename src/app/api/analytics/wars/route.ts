@@ -626,15 +626,15 @@ function analyzeAdvancedAttackPatterns(wars: any[]) {
 function analyzeCompetitivePerformance(wars: any[]) {
     const analysis = {
         opponentAnalysis: {
-            levels: {},
-            sizes: {},
+            levels: {} as Record<number, number>,
+            sizes: {} as Record<number, number>,
             strengthComparison: { stronger: 0, similar: 0, weaker: 0 }
         },
-        closeWars: [],
-        dominantPerformances: [],
-        underperformances: [],
-        clutchWins: [],
-        missedOpportunities: []
+        closeWars: [] as any[],
+        dominantPerformances: [] as any[],
+        underperformances: [] as any[],
+        clutchWins: [] as any[],
+        missedOpportunities: [] as any[]
     };
 
     wars.forEach(war => {
