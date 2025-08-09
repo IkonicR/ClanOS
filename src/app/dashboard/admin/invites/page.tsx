@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { KeyRound, Copy, PlusCircle, Users, BarChart3, CheckCircle2, XCircle, PauseCircle, PlayCircle, Trash2, Calendar, User, Tag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,8 +39,8 @@ interface InviteCode {
   created_at: string;
   used_by: string | null;
   used_by_username: string | null;
-  used_at: string | null;
   expires_at: string;
+  role_level?: 'admin' | 'member' | 'leader' | 'co-leader' | 'elder' | null;
 }
 
 function StatCard({ title, value, icon: Icon }: { title: string; value: string | number; icon: React.ElementType }) {
@@ -76,6 +77,9 @@ const InviteCodeCard = ({ invite, onCopy, onDelete }: { invite: InviteCode, onCo
                                 <status.icon className="w-3 h-3 mr-1.5" />
                                 {status.text}
                             </Badge>
+                            {invite.role_level === 'admin' && (
+                              <Badge variant="destructive" className="ml-2">Admin</Badge>
+                            )}
                         </div>
                     </div>
                     <div className="flex items-center gap-1">
@@ -122,6 +126,9 @@ export default function AdminInvitesPage() {
   const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAdminCode, setIsAdminCode] = useState(false);
+  const [showCodeDialog, setShowCodeDialog] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const supabase = createClient();
   const { toast } = useToast();
 
@@ -129,7 +136,7 @@ export default function AdminInvitesPage() {
     setIsLoading(true);
     const { data, error } = await supabase
       .from('invite_codes')
-      .select('*, profiles:used_by(username)')
+      .select('id, code, created_at, used_by, expires_at, role_level, profiles:used_by(username)')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -178,13 +185,16 @@ export default function AdminInvitesPage() {
         code, 
         created_by: user.id,
         expires_at: expiresAt.toISOString(),
+        role_level: isAdminCode ? 'admin' : 'member',
       });
 
     if (error) {
       console.error("Failed to generate code. Full error:", JSON.stringify(error, null, 2));
       toast({ title: 'Error', description: `Failed to generate invite code: ${error.message}`, variant: 'destructive' });
     } else {
-      toast({ title: 'Success!', description: `Generated new invite code: ${code}` });
+      setGeneratedCode(code);
+      setShowCodeDialog(true);
+      toast({ title: 'Success!', description: 'Invite code generated.' });
       await fetchInviteCodes(); // Refresh the list
     }
     setIsGenerating(false);
@@ -201,21 +211,16 @@ export default function AdminInvitesPage() {
     const updatedCodes = inviteCodes.filter(code => code.id !== inviteId);
     setInviteCodes(updatedCodes);
 
-    const { error, count } = await supabase
-      .from('invite_codes')
-      .delete({ count: 'exact' })
-      .eq('id', inviteId);
-
-    if (error) {
-      console.error("Failed to delete code. Full error:", JSON.stringify(error, null, 2));
-      toast({ title: 'Error', description: `Failed to delete code: ${error.message}`, variant: 'destructive' });
-      setInviteCodes(originalCodes); // Revert on error
-    } else if (count === 0) {
-      console.error("No code was deleted. The code might not exist or RLS is preventing deletion.");
-      toast({ title: 'Deletion Failed', description: `No code was deleted. It may have already been removed.`, variant: 'destructive' });
-      setInviteCodes(originalCodes); // Revert on error
-    } else {
+    try {
+      const res = await fetch(`/api/admin/invite-codes/${inviteId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete');
+      }
       toast({ title: 'Success!', description: `Invite code has been deleted.` });
+    } catch (error: any) {
+      toast({ title: 'Deletion Failed', description: error.message, variant: 'destructive' });
+      setInviteCodes(originalCodes);
     }
   }
 
@@ -244,10 +249,22 @@ export default function AdminInvitesPage() {
                         Here are all the invite codes that have been generated.
                     </CardDescription>
                 </div>
-                <Button onClick={generateInviteCode} disabled={isGenerating} className="w-full sm:w-auto">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    <span className="sm:inline">{isGenerating ? 'Generating...' : 'Generate New Code'}</span>
-                </Button>
+                <div className="flex w-full sm:w-auto items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">Admin access</span>
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-primary"
+                      checked={isAdminCode}
+                      onChange={(e) => setIsAdminCode(e.target.checked)}
+                      aria-label="Admin access"
+                    />
+                  </div>
+                  <Button onClick={generateInviteCode} disabled={isGenerating} className="w-full sm:w-auto">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      <span className="sm:inline">{isGenerating ? 'Generating...' : 'Generate New Code'}</span>
+                  </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 {isLoading ? (
@@ -284,6 +301,7 @@ export default function AdminInvitesPage() {
                             <TableRow>
                                 <TableHead>Code</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Grants</TableHead>
                                 <TableHead>Used By</TableHead>
                                 <TableHead>Created</TableHead>
                                 <TableHead>Expires</TableHead>
@@ -302,6 +320,13 @@ export default function AdminInvitesPage() {
                                     ) : (
                                         <Badge variant="default" className="bg-green-600/90 text-white flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1.5"/>Active</Badge>
                                     )}
+                                </TableCell>
+                                <TableCell>
+                                  {invite.role_level === 'admin' ? (
+                                    <Badge variant="destructive" className="w-fit">Admin</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="w-fit">Standard</Badge>
+                                  )}
                                 </TableCell>
                                 <TableCell>{invite.used_by_username ?? <span className="text-muted-foreground/60">N/A</span>}</TableCell>
                                 <TableCell>
@@ -377,6 +402,28 @@ export default function AdminInvitesPage() {
                 )}
             </CardContent>
         </Card>
+        <Dialog open={showCodeDialog} onOpenChange={setShowCodeDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invite Code Generated</DialogTitle>
+              <DialogDescription>Share this code with the user to allow signup.</DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 flex items-center justify-between rounded-md border p-3">
+              <code className="font-mono text-sm break-all">{generatedCode}</code>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => generatedCode && copyToClipboard(generatedCode)}
+                aria-label="Copy code"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setShowCodeDialog(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 } 

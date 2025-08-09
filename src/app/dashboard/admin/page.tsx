@@ -16,6 +16,7 @@ import {
   BarChart3,
   MessageSquare,
   Link as LinkIcon,
+  KeyRound,
   AlertTriangle,
   ChevronRight
 } from 'lucide-react';
@@ -170,6 +171,15 @@ const AdminDashboard = () => {
       href: '/dashboard/admin/clan-relationships',
       stat: stats.clanRelationships,
       statLabel: 'relationships',
+      variant: 'default' as const
+    },
+    {
+      title: 'Invite Codes',
+      description: 'Generate and manage invite codes',
+      icon: KeyRound,
+      href: '/dashboard/admin/invites',
+      stat: null,
+      statLabel: '',
       variant: 'default' as const
     },
     {

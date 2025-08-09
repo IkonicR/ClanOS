@@ -11,8 +11,8 @@ import { getClanInfo } from '@/lib/coc-api';
 const FormSchema = z.object({
   playerTag: z.string().trim().min(1, { message: 'Player Tag is required.' }),
   apiToken: z.string().trim().min(1, { message: 'API Token is required.' }),
-  email: z.string().email({ message: 'Please enter a valid email.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  email: z.string().email({ message: 'Please enter a valid email.' }).optional(),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }).optional(),
 });
 
 export async function verifyPlayerAccount(prevState: { message: string }, formData: FormData) {
@@ -55,18 +55,29 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
     }
 
     if (verificationData.status === 'ok') {
-      // Player token is valid, now create user in Supabase
       const supabase = createClient();
       const cookieStore = cookies();
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            playerTag: playerTag, // saving player_tag in user metadata
-          }
+      // If user is already authenticated (e.g., via Google), skip email/password sign up
+      const { data: { session } } = await supabase.auth.getSession();
+      let user = session?.user ?? null;
+      let signUpError: any = null;
+
+      if (!user) {
+        if (!email || !password) {
+          return { message: 'Email and Password are required when not signed in.' };
         }
-      });
+        const signUpRes = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              playerTag: playerTag,
+            }
+          }
+        });
+        signUpError = signUpRes.error;
+        user = signUpRes.data.user;
+      }
 
       if (signUpError) {
         console.error('Supabase SignUp Error:', signUpError);
@@ -121,11 +132,10 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
                 }
             }
 
-            const { error: profileUpdateError } = await supabaseAdmin
+             const { error: profileUpdateError } = await supabaseAdmin
                 .from('profiles')
                 .update({ 
                     clan_tag: playerInfo.clan.tag,
-                    clan_name: playerInfo.clan.name,
                     username: playerInfo.name,
                     in_game_name: playerInfo.name,
                     role: userRole
@@ -154,8 +164,7 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
         cookieStore.delete('invite_code');
       }
 
-      // If there's no error, the user was created.
-      // Redirect to the dashboard page.
+      // If there's no error, ensure we have a session and redirect
       redirect('/dashboard');
     } else {
       return { message: verificationData.reason || 'Verification failed. The token may be invalid or expired.' };
@@ -168,3 +177,149 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
     return { message: 'An unexpected error occurred. Please try again.' };
   }
 } 
+
+// New: Step 1 - Verify only, store cookie
+const VerifyFormSchema = z.object({
+  playerTag: z.string().trim().min(1, { message: 'Player Tag is required.' }),
+  apiToken: z.string().trim().min(1, { message: 'API Token is required.' }),
+});
+
+export async function verifyPlayerToken(prevState: { message: string; success?: boolean }, formData: FormData) {
+  const validated = VerifyFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!validated.success) {
+    const msg = validated.error.issues.map(i => i.message).join(' ');
+    return { message: msg };
+  }
+  const { playerTag, apiToken } = validated.data;
+  const cocApiToken = process.env.CLASH_OF_CLANS_API_TOKEN;
+  if (!cocApiToken) {
+    return { message: 'Clash of Clans API token is not configured on the server.' };
+  }
+  const encodedPlayerTag = encodeURIComponent(playerTag);
+  try {
+    const res = await fetch(`https://cocproxy.royaleapi.dev/v1/players/${encodedPlayerTag}/verifytoken`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cocApiToken}`,
+      },
+      body: JSON.stringify({ token: apiToken }),
+    });
+    const verificationData = await res.json();
+    if (!res.ok || verificationData.status !== 'ok') {
+      return { message: verificationData.reason || 'Failed to verify player token. Please check your inputs.' };
+    }
+    // Store short-lived cookie with verified tag
+    const cookieStore = cookies();
+    cookieStore.set('verified_player_tag', playerTag, {
+      path: '/',
+      maxAge: 60 * 15, // 15 minutes
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+    });
+    return { message: '', success: true };
+  } catch (e) {
+    return { message: 'An unexpected error occurred during verification.' };
+  }
+}
+
+// New: Step 2 (Email) - Complete signup using verified cookie
+const EmailFormSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+});
+
+export async function completeSignupWithEmail(prevState: { message: string }, formData: FormData) {
+  const validated = EmailFormSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!validated.success) {
+    const msg = validated.error.issues.map(i => i.message).join(' ');
+    return { message: msg };
+  }
+  const { email, password } = validated.data;
+  const supabase = createClient();
+  const cookieStore = cookies();
+  const playerTag = cookieStore.get('verified_player_tag')?.value;
+
+  if (!playerTag) {
+    return { message: 'Please verify your player tag first.' };
+  }
+
+  const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { playerTag } },
+  });
+  if (signUpError) {
+    return { message: signUpError.message };
+  }
+  if (!user) {
+    return { message: 'User registration failed. Please try again.' };
+  }
+
+  try {
+    const playerInfo = await getPlayerInfo(playerTag);
+    let userRole: string = 'user';
+    if (playerInfo && playerInfo.clan && playerInfo.clan.tag) {
+      try {
+        const clanData = await getClanInfo(playerInfo.clan.tag);
+        const member = clanData.memberList?.find((m: any) => m.tag === playerTag);
+        if (member) {
+          switch ((member.role || '').toLowerCase()) {
+            case 'leader': userRole = 'leader'; break;
+            case 'co-leader':
+            case 'coleader': userRole = 'coLeader'; break;
+            case 'elder': userRole = 'elder'; break;
+            default: userRole = 'user';
+          }
+        }
+      } catch {}
+    }
+
+    // Apply admin role if the invite code was created as admin
+    const supabaseAdmin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+    // If invite has role_level === 'admin', elevate profile role
+    let finalRole = userRole;
+    const inviteCode = cookieStore.get('invite_code')?.value;
+    if (inviteCode) {
+      const { data: invite } = await supabase
+        .from('invite_codes')
+        .select('role_level')
+        .eq('code', inviteCode)
+        .single();
+      if (invite?.role_level === 'admin') {
+        finalRole = 'admin';
+      }
+    }
+
+    const { error: profileUpdateError } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        clan_tag: playerInfo?.clan?.tag ?? null,
+        username: playerInfo?.name ?? null,
+        in_game_name: playerInfo?.name ?? null,
+        role: finalRole,
+      })
+      .eq('id', user.id);
+    if (profileUpdateError) {
+      return { message: 'We could not update your profile with your clan information.' };
+    }
+
+    // Invalidate invite and clear cookies
+    if (inviteCode) {
+      await supabase
+        .from('invite_codes')
+        .update({ used_by: user.id, used_at: new Date().toISOString() })
+        .eq('code', inviteCode);
+      cookieStore.delete('invite_code');
+    }
+    cookieStore.delete('verified_player_tag');
+  } catch (e) {
+    return { message: 'We could not complete your signup.' };
+  }
+
+  redirect('/dashboard');
+}

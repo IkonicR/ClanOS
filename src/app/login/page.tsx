@@ -4,6 +4,7 @@ import React from 'react';
 import { useFormState } from 'react-dom';
 import { login } from '@/app/login/actions';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const initialState = {
   message: '',
@@ -67,6 +68,21 @@ export default function LoginPage() {
           </div>
           {state?.message && <p className="text-sm text-red-500 text-center">{state.message}</p>}
         </form>
+        <div className="mt-6">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+          <div className="mt-4">
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/auth/oauth/google?next=%2Fdashboard">Continue with Google</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
