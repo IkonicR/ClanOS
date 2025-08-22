@@ -11,7 +11,7 @@ const nextConfig = {
     '@tldraw/state-react',
   ],
   experimental: {
-    optimizePackageImports: ['@tldraw/editor'],
+    // Removed optimizePackageImports for @tldraw/editor due to import errors
   },
   webpack: (config) => {
     config.resolve.fallback = {
