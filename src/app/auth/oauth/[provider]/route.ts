@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-export async function GET(request: NextRequest, { params }: { params: { provider: string } }) {
-  const provider = params.provider
+export async function GET(request: NextRequest, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider } = await params
   if (provider !== 'google') {
     return NextResponse.json({ error: 'Unsupported provider' }, { status: 400 })
   }

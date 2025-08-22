@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,15 +45,15 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchUserProfile();
-  }, [user]);
+  }, [user, fetchUserProfile]);
 
   useEffect(() => {
     if (userRole && ['admin', 'leader', 'coLeader', 'elder'].includes(userRole)) {
       fetchAdminStats();
     }
-  }, [userRole, userClan]);
+  }, [userRole, userClan, fetchAdminStats]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -72,9 +72,9 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, supabase]);
 
-  const fetchAdminStats = async () => {
+  const fetchAdminStats = useCallback(async () => {
     if (!userClan) return;
 
     try {
@@ -100,7 +100,7 @@ const AdminDashboard = () => {
       // Get recent posts (last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const { data: posts } = await supabase
         .from('posts')
         .select('id')
@@ -116,7 +116,7 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error('Error fetching admin stats:', error);
     }
-  };
+  }, [userClan, supabase]);
 
   const canAccess = userRole && ['admin', 'leader', 'coLeader', 'elder'].includes(userRole);
 
@@ -184,9 +184,9 @@ const AdminDashboard = () => {
     },
     {
       title: 'Member Management',
-      description: 'View and manage clan members, roles, and permissions',
+      description: 'View and manage members, linked Clash accounts, and roles',
       icon: Users,
-      href: '/dashboard/members',
+      href: '/dashboard/admin/members',
       stat: stats.totalMembers,
       statLabel: 'members',
       variant: 'default' as const
@@ -360,10 +360,10 @@ const AdminDashboard = () => {
                  Add Sister Clan
                </Button>
              </Link>
-            <Link href="/dashboard/members">
+            <Link href="/dashboard/admin/members">
               <Button variant="outline" className="w-full justify-start">
                 <Users className="h-4 w-4 mr-2" />
-                View All Members
+                Manage Members
               </Button>
             </Link>
             <Link href="/dashboard/clan-feed">

@@ -39,10 +39,11 @@ function NavLink({ href, children, onClick }: { href: string, children: React.Re
         <Link
             href={href}
             onClick={onClick}
+            prefetch={true}
             className={cn(
                 "px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                isActive 
-                    ? "text-primary" 
+                isActive
+                    ? "text-primary"
                     : "text-muted-foreground/70 hover:text-foreground dark:text-muted-foreground dark:hover:text-secondary-foreground"
             )}
         >
@@ -55,6 +56,7 @@ export function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
   const supabase = createClient();
 
   useEffect(() => {
@@ -146,9 +148,19 @@ export function Header() {
             {/* Desktop Nav (Center) */}
             <nav className="hidden items-center justify-center gap-2 md:flex flex-1">
                 {navItems.map((item) => (
-                    <NavLink key={item.href} href={item.href}>
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        prefetch={true}
+                        className={cn(
+                            "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                            pathname === item.href
+                                ? "text-primary"
+                                : "text-muted-foreground/70 hover:text-foreground dark:text-muted-foreground dark:hover:text-secondary-foreground"
+                        )}
+                    >
                         {item.label}
-                    </NavLink>
+                    </Link>
                 ))}
             </nav>
 
@@ -156,7 +168,7 @@ export function Header() {
             <div className="flex items-center justify-end gap-2">
                 {/* Desktop Feedback Button */}
                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex items-center text-muted-foreground hover:text-foreground">
-                    <Link href="/dashboard/feedback" className="flex items-center gap-2">
+                    <Link href="/dashboard/feedback" prefetch={true} className="flex items-center gap-2">
                         <MessageSquare className="w-4 h-4"/>
                         Feedback
                     </Link>
@@ -185,21 +197,21 @@ export function Header() {
                                 <ProfileSwitcher />
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    <Link href={`/dashboard/members/${profile?.player_tag?.replace('#', '%23')}`} className="flex items-center cursor-pointer">
+                                    <Link href={`/dashboard/members/${profile?.player_tag?.replace('#', '%23')}`} prefetch={true} className="flex items-center cursor-pointer">
                                         <UserIcon className="w-4 h-4 mr-2" />
                                         <span>My Profile</span>
                                     </Link>
                                 </DropdownMenuItem>
                                 {profile?.role && ['admin', 'leader', 'coLeader', 'elder'].includes(profile.role) && (
                                     <DropdownMenuItem asChild>
-                                        <Link href="/dashboard/admin" className="flex items-center cursor-pointer">
+                                        <Link href="/dashboard/admin" prefetch={true} className="flex items-center cursor-pointer">
                                             <Shield className="w-4 h-4 mr-2" />
                                             <span>Admin Dashboard</span>
                                         </Link>
                                     </DropdownMenuItem>
                                 )}
                                 <DropdownMenuItem asChild>
-                                    <Link href="/dashboard/settings" className="flex items-center cursor-pointer">
+                                    <Link href="/dashboard/settings" prefetch={true} className="flex items-center cursor-pointer">
                                         <SettingsIcon className="w-4 h-4 mr-2" />
                                         <span>Settings</span>
                                     </Link>

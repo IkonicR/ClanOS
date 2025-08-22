@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-export async function DELETE(request: Request, { params }: { params: { postId: string } }) {
+export async function DELETE(request: Request, context: any) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -9,7 +9,8 @@ export async function DELETE(request: Request, { params }: { params: { postId: s
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { postId } = params;
+    const { params } = context || {}
+    const { postId } = params || {};
 
     // Optional: Check if the user is the owner of the post
     const { data: post, error: fetchError } = await supabase
@@ -39,7 +40,7 @@ export async function DELETE(request: Request, { params }: { params: { postId: s
     return NextResponse.json({ message: 'Post deleted' }, { status: 200 });
 }
 
-export async function PATCH(request: Request, { params }: { params: { postId: string } }) {
+export async function PATCH(request: Request, context: any) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -47,7 +48,8 @@ export async function PATCH(request: Request, { params }: { params: { postId: st
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { postId } = params;
+    const { params } = context || {}
+    const { postId } = params || {};
     const { content } = await request.json();
 
     if (!content) {

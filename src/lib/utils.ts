@@ -14,3 +14,23 @@ export function getAssetPath(type: 'hero' | 'troop', name: string) {
   const formattedName = name.toLowerCase().replace(/\s+/g, '-');
   return `/${type}-icons/${formattedName}.png`;
 }
+
+export type RoleCode = 'admin' | 'leader' | 'coLeader' | 'elder' | 'user' | 'member'
+
+export function formatRole(role: string | null | undefined): string {
+  switch ((role || 'user')) {
+    case 'admin':
+      return 'Admin'
+    case 'leader':
+      return 'Leader'
+    case 'coLeader':
+      return 'Co-Leader'
+    case 'elder':
+      return 'Elder'
+    case 'member':
+    case 'user':
+    default:
+      return 'Member'
+  }
+}
+

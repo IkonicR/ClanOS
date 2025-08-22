@@ -3,14 +3,15 @@ import { createClient } from '@/lib/supabase/admin'
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const supabaseAdmin = createClient()
     const { error, count } = await supabaseAdmin
       .from('invite_codes')
       .delete({ count: 'exact' })
-      .eq('id', params.id)
+      .eq('id', id)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

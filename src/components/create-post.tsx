@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -150,7 +151,7 @@ const CreatePost = ({ onCreatePost, feedType = 'clan' }: CreatePostProps) => {
                             </div>
                         ) : imagePreview ? (
                             <>
-                                <img src={imagePreview} alt="Preview" className="rounded-lg max-h-60 w-full object-contain" />
+                                <Image src={imagePreview} alt="Preview" width={400} height={240} className="rounded-lg max-h-60 w-full object-contain" />
                                 <Button
                                     type="button"
                                     variant="destructive"

@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 
 export async function verifyInviteCode(formData: FormData) {
   const code = formData.get('code') as string;
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const supabase = createClient();
 
   if (!code) {
@@ -32,7 +32,7 @@ export async function verifyInviteCode(formData: FormData) {
   }
 
   // If the code is valid, store it in a cookie and redirect to signup
-  cookieStore.set('invite_code', code, {
+  ;(await cookieStore).set('invite_code', code, {
     path: '/',
     maxAge: 60 * 15, // 15 minutes
     httpOnly: true,

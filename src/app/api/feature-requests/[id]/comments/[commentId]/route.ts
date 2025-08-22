@@ -14,11 +14,12 @@ async function getComment(supabase: any, commentId: string) {
 
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string, commentId: string } }
+    context: any
 ) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const { commentId } = params;
+    const { params } = context || {}
+    const { commentId } = params || {};
     const { content } = await request.json();
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -43,11 +44,12 @@ export async function PUT(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string, commentId: string } }
+    context: any
 ) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const { commentId } = params;
+    const { params } = context || {}
+    const { commentId } = params || {};
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 

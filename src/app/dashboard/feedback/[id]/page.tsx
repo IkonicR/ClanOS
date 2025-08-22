@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, FormEvent, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import { useUser } from '@/lib/hooks/useUser';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,13 +25,10 @@ interface RequestDetails {
     comments: Comment[];
 }
 
-interface FeatureRequest {
-    id: number;
-    title: string;
-    description: string;
-}
+export default function FeedbackDetail() {
+    const params = useParams<{ id: string }>();
+    const id = (params?.id as string) || '';
 
-export default function FeedbackDetail({ params }: { params: { id: string }}) {
     const [request, setRequest] = useState<RequestDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
@@ -38,9 +36,8 @@ export default function FeedbackDetail({ params }: { params: { id: string }}) {
     const { user } = useUser();
 
     const fetchRequestDetails = useCallback(async () => {
-        // Don't set loading to true here to prevent flicker on re-fetch
         try {
-            const res = await fetch(`/api/feature-requests/${params.id}`);
+            const res = await fetch(`/api/feature-requests/${id}`);
             if (!res.ok) throw new Error('Failed to fetch details');
             const data = await res.json();
             setRequest(data);
@@ -49,14 +46,14 @@ export default function FeedbackDetail({ params }: { params: { id: string }}) {
         } finally {
             setLoading(false);
         }
-    }, [params.id]);
+    }, [id]);
 
     useEffect(() => {
-        if (params.id) {
+        if (id) {
             setLoading(true);
             fetchRequestDetails();
         }
-    }, [params.id, fetchRequestDetails]);
+    }, [id, fetchRequestDetails]);
 
     const handleCommentSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -77,21 +74,15 @@ export default function FeedbackDetail({ params }: { params: { id: string }}) {
         setNewComment('');
 
         try {
-            const res = await fetch(`/api/feature-requests/${params.id}/comments`, {
+            const res = await fetch(`/api/feature-requests/${id}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content: optimisticComment.content }),
             });
             if (!res.ok) throw new Error('Failed to post comment');
-            
-            // The component re-fetches its own data, so a callback is not needed here.
-            // onCommentAdded?.();
-
-            // Re-fetch to get the real data, which will replace the optimistic comment
             await fetchRequestDetails(); 
         } catch (error) {
             toast({ title: 'Error', description: 'Could not post your comment.', variant: 'destructive' });
-            // Revert on error
             setRequest(prev => prev ? { ...prev, comments: prev.comments.filter(c => c.id !== tempCommentId) } : null);
         } finally {
             setIsSubmitting(false);

@@ -156,7 +156,7 @@ function FeedbackList() {
       
       <Dialog open={!!selectedRequest} onOpenChange={(isOpen) => !isOpen && setSelectedRequestId(null)}>
         <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-0">
-          {selectedRequest && <FeedbackDetail params={{ id: selectedRequest.id.toString() }} />}
+          {selectedRequest && <FeedbackDetail />}
         </DialogContent>
       </Dialog>
     </>

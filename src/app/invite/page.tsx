@@ -8,11 +8,8 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-export default async function InvitePage({
-  searchParams,
-}: {
-  searchParams: { message: string };
-}) {
+export default async function InvitePage(props: any) {
+  const searchParams = props?.searchParams || {} as { message?: string }
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 

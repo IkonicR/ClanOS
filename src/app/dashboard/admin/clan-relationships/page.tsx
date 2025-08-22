@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,15 +42,15 @@ const ClanRelationshipsPage = () => {
     if (user) {
       fetchUserProfile();
     }
-  }, [user]);
+  }, [user, fetchUserProfile]);
 
   useEffect(() => {
     if (userClanTag) {
       fetchRelationships();
     }
-  }, [userClanTag]);
+  }, [userClanTag, fetchRelationships]);
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -67,14 +67,14 @@ const ClanRelationshipsPage = () => {
     } catch (error) {
       console.error('Error fetching profile:', error);
     }
-  };
+  }, [user, supabase]);
 
-  const fetchRelationships = async () => {
+  const fetchRelationships = useCallback(async () => {
     if (!userClanTag) return;
 
     try {
       console.log('Fetching relationships for clan:', userClanTag);
-      
+
       const { data, error } = await supabase
         .from('clan_relationships')
         .select('*')
@@ -96,7 +96,7 @@ const ClanRelationshipsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userClanTag, supabase, toast]);
 
   const addRelationship = async () => {
     if (!newClanTag.trim() || !userClanTag) return;

@@ -1,8 +1,26 @@
-import { updateSession } from '@/lib/supabase/middleware'
-import { type NextRequest } from 'next/server'
+import { updateSession, createClient } from '@/lib/supabase/middleware'
+import { type NextRequest, NextResponse } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  return await updateSession(request)
+  // Refresh session cookies
+  const response = await updateSession(request)
+
+  // Auth gate: require login for dashboard and its subroutes
+  const pathname = request.nextUrl.pathname
+  const isProtectedUI = pathname.startsWith('/dashboard')
+
+  if (isProtectedUI) {
+    const { supabase } = createClient(request)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
+    }
+  }
+
+  return response
 }
 
 export const config = {

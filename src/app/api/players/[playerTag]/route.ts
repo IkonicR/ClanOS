@@ -4,7 +4,7 @@ import { getPlayerInfo } from '@/lib/coc-api';
 
 export async function GET(
     request: Request,
-    { params }: { params: { playerTag: string } }
+    { params }: { params: Promise<{ playerTag: string }> }
 ) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -12,8 +12,8 @@ export async function GET(
     if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
-    const playerTag = params.playerTag;
+
+    const { playerTag } = await params;
     if (!playerTag) {
         return NextResponse.json({ error: 'Player tag is required' }, { status: 400 });
     }

@@ -2,9 +2,9 @@ import { createClient as createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request, { params }: { params: { postId: string } }) {
+export async function GET(request: Request, { params }: { params: Promise<{ postId: string }> }) {
     const supabaseAdmin = createAdminClient();
-    const { postId } = params;
+    const { postId } = await params;
 
     const { data: comments, error } = await supabaseAdmin
         .from('comments')
@@ -29,7 +29,7 @@ export async function GET(request: Request, { params }: { params: { postId: stri
     return NextResponse.json(comments);
 }
 
-export async function POST(request: Request, { params }: { params: { postId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ postId: string }> }) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -37,7 +37,7 @@ export async function POST(request: Request, { params }: { params: { postId: str
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { postId } = params;
+    const { postId } = await params;
     const { content } = await request.json();
 
     const { data: newComment, error } = await supabase

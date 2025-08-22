@@ -4,12 +4,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader, User, Shield, Trophy, ArrowUp, ArrowDown, Search, UserPlus, Check, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Loader, User, Shield, Trophy, ArrowUp, ArrowDown, Search, UserPlus, Check, Clock, Users, Crown, TrendingUp, Filter } from 'lucide-react';
 import { MemberWithFriendship } from '@/lib/types';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 import { cn, getTownHallImage } from '@/lib/utils';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -243,40 +244,158 @@ const MembersPage = () => {
         return <div className="text-destructive text-center">Error: {error}</div>;
     }
 
+    // Calculate statistics
+    const totalDonations = members.reduce((acc, member) => acc + member.donations, 0);
+    const totalDonationsReceived = members.reduce((acc, member) => acc + member.donationsReceived, 0);
+    const avgTrophies = Math.round(members.reduce((acc, member) => acc + member.trophies, 0) / members.length);
+    const avgTownHall = Math.round(members.reduce((acc, member) => acc + member.townHallLevel, 0) / members.length);
+
+    const roleDistribution = members.reduce((acc: any, member) => {
+        acc[member.role] = (acc[member.role] || 0) + 1;
+        return acc;
+    }, {});
+
+    const lowActivityMembers = members.filter(m => m.donations < 50).length;
+    const highTrophyMembers = members.filter(m => m.trophies > 3000).length;
+
     return (
-        <>
+        <div className="space-y-6">
             <Toaster />
-            <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0 mb-6">
-                <h2 className="text-3xl font-bold tracking-tight text-white/90">Clan Members ({members.length})</h2>
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                    <div className="relative w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search member..."
-                            value={searchTerm}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                            className="pl-10 bg-background/50 border-white/20"
-                        />
-                    </div>
-                    <Select onValueChange={(value: SortableKey) => setSortKey(value)} defaultValue="clanRank">
-                        <SelectTrigger className="w-[180px] bg-background/50 border-white/20">
-                            <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="clanRank">Clan Rank</SelectItem>
-                            <SelectItem value="trophies">Trophies</SelectItem>
-                            <SelectItem value="donations">Donations</SelectItem>
-                            <SelectItem value="donationsReceived">Received</SelectItem>
-                        </SelectContent>
-                    </Select>
+
+            {/* Header Section */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold">Members</h1>
+                    <p className="text-muted-foreground">Manage your clan members and relationships</p>
                 </div>
+                <Button className="gap-2">
+                    <UserPlus className="w-4 h-4" />
+                    Invite Member
+                </Button>
             </div>
+
+            {/* Statistics Overview */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{members.length}</div>
+                        <p className="text-xs text-muted-foreground">Active members</p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Avg Trophies</CardTitle>
+                        <Trophy className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{avgTrophies.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">Per member</p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Total Donations</CardTitle>
+                        <ArrowUp className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{totalDonations.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">This season</p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Low Activity</CardTitle>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{lowActivityMembers}</div>
+                        <p className="text-xs text-muted-foreground">Donations &lt; 50</p>
+                        <Progress value={(members.length - lowActivityMembers) / members.length * 100} className="mt-2" />
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Search and Filters */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                                    <Input
+                                        placeholder="Search members by name..."
+                                        value={searchTerm}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                                        className="pl-10"
+                                    />
+                                </div>
+                            </div>
+                            <Select onValueChange={(value: SortableKey) => setSortKey(value)} defaultValue="clanRank">
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="clanRank">Clan Rank</SelectItem>
+                                    <SelectItem value="trophies">Trophies</SelectItem>
+                                    <SelectItem value="donations">Donations</SelectItem>
+                                    <SelectItem value="donationsReceived">Received</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button variant="outline" size="sm">
+                                <Filter className="w-4 h-4 mr-2" />
+                                Filters
+                            </Button>
+                        </div>
+
+                        {/* Quick Role Filter */}
+                        <div className="flex gap-2 flex-wrap">
+                            <Button variant="outline" size="sm" className="h-8">
+                                All ({members.length})
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8">
+                                Leaders ({roleDistribution.leader || 0})
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8">
+                                Co-Leaders ({roleDistribution.coLeader || 0})
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8">
+                                Elders ({roleDistribution.elder || 0})
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-8">
+                                Members ({roleDistribution.member || 0})
+                            </Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Members Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                 {sortedAndFilteredMembers.map((member) => (
+                {sortedAndFilteredMembers.map((member) => (
                     <MemberCard key={member.tag} member={member} onUpdate={handleFriendshipUpdate}/>
                 ))}
             </div>
-        </>
+
+            {sortedAndFilteredMembers.length === 0 && (
+                <Card>
+                    <CardContent className="py-8 text-center">
+                        <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No members found</h3>
+                        <p className="text-muted-foreground">
+                            {searchTerm ? 'Try adjusting your search criteria' : 'No members match the current filters'}
+                        </p>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 };
 

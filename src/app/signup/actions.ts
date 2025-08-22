@@ -56,7 +56,7 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
 
     if (verificationData.status === 'ok') {
       const supabase = createClient();
-      const cookieStore = cookies();
+      const cookieStore = await cookies();
       // If user is already authenticated (e.g., via Google), skip email/password sign up
       const { data: { session } } = await supabase.auth.getSession();
       let user = session?.user ?? null;
@@ -153,7 +153,7 @@ export async function verifyPlayerAccount(prevState: { message: string }, formDa
       }
 
       // Invalidate the invite code
-      const inviteCode = cookieStore.get('invite_code')?.value;
+      const inviteCode = (await cookieStore).get('invite_code')?.value;
       if (inviteCode) {
         await supabase
           .from('invite_codes')
@@ -210,8 +210,8 @@ export async function verifyPlayerToken(prevState: { message: string; success?: 
       return { message: verificationData.reason || 'Failed to verify player token. Please check your inputs.' };
     }
     // Store short-lived cookie with verified tag
-    const cookieStore = cookies();
-    cookieStore.set('verified_player_tag', playerTag, {
+    const cookieStore = await cookies();
+    ;(await cookieStore).set('verified_player_tag', playerTag, {
       path: '/',
       maxAge: 60 * 15, // 15 minutes
       httpOnly: true,
@@ -237,8 +237,8 @@ export async function completeSignupWithEmail(prevState: { message: string }, fo
   }
   const { email, password } = validated.data;
   const supabase = createClient();
-  const cookieStore = cookies();
-  const playerTag = cookieStore.get('verified_player_tag')?.value;
+    const cookieStore = await cookies();
+    const playerTag = (await cookieStore).get('verified_player_tag')?.value;
 
   if (!playerTag) {
     return { message: 'Please verify your player tag first.' };
@@ -283,7 +283,7 @@ export async function completeSignupWithEmail(prevState: { message: string }, fo
     );
     // If invite has role_level === 'admin', elevate profile role
     let finalRole = userRole;
-    const inviteCode = cookieStore.get('invite_code')?.value;
+    const inviteCode = (await cookieStore).get('invite_code')?.value;
     if (inviteCode) {
       const { data: invite } = await supabase
         .from('invite_codes')
@@ -295,9 +295,56 @@ export async function completeSignupWithEmail(prevState: { message: string }, fo
       }
     }
 
+    // Create/activate a linked profile for this tag
+    // Deactivate others first
+    await supabaseAdmin
+      .from('linked_profiles')
+      .update({ is_active: false })
+      .eq('user_id', user.id);
+
+    const { data: existingLinked } = await supabaseAdmin
+      .from('linked_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('player_tag', playerTag)
+      .single();
+
+    let activeProfileId: string | null = null;
+    if (existingLinked) {
+      const { data: updatedLinked } = await supabaseAdmin
+        .from('linked_profiles')
+        .update({
+          clan_tag: playerInfo?.clan?.tag ?? null,
+          in_game_name: playerInfo?.name ?? null,
+          role: finalRole,
+          is_active: true,
+        })
+        .eq('id', existingLinked.id)
+        .select()
+        .single();
+      activeProfileId = updatedLinked?.id ?? existingLinked.id;
+    } else {
+      const { data: insertedLinked } = await supabaseAdmin
+        .from('linked_profiles')
+        .insert({
+          user_id: user.id,
+          player_tag: playerTag,
+          clan_tag: playerInfo?.clan?.tag ?? null,
+          in_game_name: playerInfo?.name ?? null,
+          role: finalRole,
+          is_active: true,
+        })
+        .select()
+        .single();
+      activeProfileId = insertedLinked?.id ?? null;
+    }
+
+    // Update main profile to reflect active linked profile and persist tags
     const { error: profileUpdateError } = await supabaseAdmin
       .from('profiles')
       .update({
+        active_profile_id: activeProfileId,
+        player_tag: playerTag,
         clan_tag: playerInfo?.clan?.tag ?? null,
         username: playerInfo?.name ?? null,
         in_game_name: playerInfo?.name ?? null,
@@ -314,9 +361,9 @@ export async function completeSignupWithEmail(prevState: { message: string }, fo
         .from('invite_codes')
         .update({ used_by: user.id, used_at: new Date().toISOString() })
         .eq('code', inviteCode);
-      cookieStore.delete('invite_code');
+      ;(await cookieStore).delete('invite_code');
     }
-    cookieStore.delete('verified_player_tag');
+    ;(await cookieStore).delete('verified_player_tag');
   } catch (e) {
     return { message: 'We could not complete your signup.' };
   }

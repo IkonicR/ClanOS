@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-export async function POST(request: Request, { params }: { params: { postId: string } }) {
+export async function POST(request: Request, context: any) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -9,7 +9,8 @@ export async function POST(request: Request, { params }: { params: { postId: str
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { postId } = params;
+    const { params } = context || {}
+    const { postId } = params || {};
 
     const { error } = await supabase
         .from('likes')
@@ -28,7 +29,7 @@ export async function POST(request: Request, { params }: { params: { postId: str
     return NextResponse.json({ message: 'Post liked' }, { status: 201 });
 }
 
-export async function DELETE(request: Request, { params }: { params: { postId: string } }) {
+export async function DELETE(request: Request, context: any) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -36,7 +37,8 @@ export async function DELETE(request: Request, { params }: { params: { postId: s
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { postId } = params;
+    const { params } = context || {}
+    const { postId } = params || {};
 
     const { error } = await supabase
         .from('likes')

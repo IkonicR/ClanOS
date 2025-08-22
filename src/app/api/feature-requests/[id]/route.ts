@@ -3,10 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    context: any
 ) {
     const supabase = createClient();
-    const { id } = params;
+    const { params } = context || {}
+    const { id } = params || {};
 
     const { data, error } = await supabase
         .from('feature_requests')
@@ -36,7 +37,7 @@ export async function GET(
 
     const { feature_request_comments, ...requestData } = data;
 
-    const combinedComments = feature_request_comments.map(comment => ({
+    const combinedComments = feature_request_comments.map((comment: any) => ({
         id: comment.id,
         content: comment.content,
         created_at: comment.created_at,

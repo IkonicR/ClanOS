@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { User } from '@supabase/supabase-js';
 import { DashboardClient } from './dashboard-client';
+import { LinkClanCard } from '@/components/link-clan-card';
 import { Member as ClanMember } from '@/lib/types';
 import { Clan, War } from '@/lib/types';
 
@@ -141,13 +142,19 @@ export default async function DashboardPage() {
                         <CardTitle>{error === 'Player tag not found' ? 'Player Tag Not Found' : 'Error'}</CardTitle>
                         <CardDescription>
                             {error === 'Player tag not found' 
-                                ? "We couldn't find a Clash of Clans Player Tag in your profile. Please sign up again to link your account." 
+                                ? "We couldn't find a Clash of Clans Player Tag in your profile. Link your player to continue." 
                                 : error === 'Not in a clan' 
                                 ? `Welcome, ${data?.playerInfo?.name}! You are not currently part of a clan.`
                                 : "Failed to load clan data."}
                         </CardDescription>
                     </CardHeader>
-                    {error === 'Player tag not found' && <CardContent><a href="/signup" className="text-primary hover:underline">Return to Sign Up</a></CardContent>}
+                    {error === 'Player tag not found' && (
+                        <CardContent>
+                            <div className="max-w-md mx-auto">
+                                <LinkClanCard />
+                            </div>
+                        </CardContent>
+                    )}
                 </Card>
             </div>
         );

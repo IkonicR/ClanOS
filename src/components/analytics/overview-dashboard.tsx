@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { 
-    Users, 
-    Trophy, 
-    Target, 
-    Gift, 
-    Crown, 
+import Image from 'next/image';
+import {
+    Users,
+    Trophy,
+    Target,
+    Gift,
+    Crown,
     Shield,
     TrendingUp,
     Swords,
@@ -17,6 +18,7 @@ import { MetricCard, StatsGrid, SectionHeader } from './analytics-cards';
 import { PieChartComponent, BarChartComponent } from './chart-components';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EChart } from '@/components/analytics/echarts'
 
 interface OverviewDashboardProps {
     data: {
@@ -75,6 +77,7 @@ interface OverviewDashboardProps {
             opponentName: string;
             timeLeft: string;
         } | null;
+        loot?: Array<{ date: string; donations: number; received: number }>;
     };
 }
 
@@ -108,15 +111,38 @@ export function OverviewDashboard({ data }: OverviewDashboardProps) {
 
     const formatPercentage = (num: number) => `${num}%`;
 
+    const lootOption = {
+        tooltip: { trigger: 'axis' },
+        grid: { left: 40, right: 20, top: 30, bottom: 40 },
+        xAxis: { type: 'category', data: data.loot?.map((d:any)=>d.date), axisLabel: { color: '#9ca3af' } },
+        yAxis: { type: 'value', axisLabel: { color: '#9ca3af' } },
+        series: [
+          {
+            name: 'Donations', type: 'line', smooth: true, showSymbol: false,
+            data: data.loot?.map((d:any)=>d.donations),
+            lineStyle: { width: 2 },
+            areaStyle: { opacity: 0.15 }
+          },
+          {
+            name: 'Received', type: 'line', smooth: true, showSymbol: false,
+            data: data.loot?.map((d:any)=>d.received),
+            lineStyle: { width: 2 },
+            areaStyle: { opacity: 0.08 }
+          }
+        ]
+      }
+
     return (
         <div className="space-y-6">
             {/* Clan Header */}
             <Card className="bg-card/75 backdrop-blur-lg border border-white/10">
                 <CardHeader>
                     <div className="flex items-center space-x-4">
-                        <img 
-                            src={clanInfo.badgeUrl} 
+                        <Image
+                            src={clanInfo.badgeUrl}
                             alt={`${clanInfo.name} badge`}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 rounded-lg"
                         />
                         <div className="flex-1">
@@ -320,6 +346,9 @@ export function OverviewDashboard({ data }: OverviewDashboardProps) {
                     </CardContent>
                 </Card>
             </div>
+            {data.loot && (
+                <EChart option={lootOption} height={320} />
+            )}
         </div>
     );
 } 

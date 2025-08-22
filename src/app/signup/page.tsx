@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import SignUpForm from './signup-form'; // We will create this component
 
 export default async function SignUpPage() {
-  const cookieStore = cookies();
-  const inviteCode = cookieStore.get('invite_code')?.value;
+  const cookieStore = await cookies();
+  const inviteCode = (await cookieStore).get('invite_code')?.value;
 
   if (!inviteCode) {
     redirect('/invite?message=An invite code is required to sign up.');
@@ -20,7 +20,7 @@ export default async function SignUpPage() {
 
   if (error || !invite || invite.used_by || new Date(invite.expires_at) < new Date()) {
     // Clear the invalid cookie and redirect
-    cookieStore.delete('invite_code');
+    ;(await cookieStore).delete('invite_code');
     redirect('/invite?message=The invite code is invalid or has expired.');
   }
 
