@@ -81,24 +81,11 @@ export async function GET(request: Request) {
         // Show only posts that were posted TO the global feed
         postsQuery = postsQuery.eq('feed_type', 'global');
     } else if (feedType === 'group') {
-        // Show posts from allied/sister clans
+        // Show posts from user's own clan (allied clans feature coming soon)
         if (userClanTag) {
-            // Get allied clans for this user's clan
-            const { data: alliedClans, error: alliedError } = await supabaseAdmin
-                .rpc('get_allied_clans', { input_clan_tag: userClanTag });
-            
-            const alliedClanTags = (alliedClans as any[])?.map((ac: any) => ac.allied_clan_tag) || [];
-            
-            if (alliedClanTags.length > 0) {
-                // Include user's own clan and allied clans
-                const allClanTags = [userClanTag, ...alliedClanTags];
-                postsQuery = postsQuery
-                    .eq('feed_type', 'group')
-                    .in('clan_tag', allClanTags);
-            } else {
-                // No allied clans, show no posts
-                postsQuery = postsQuery.eq('feed_type', 'NONEXISTENT');
-            }
+            postsQuery = postsQuery
+                .eq('feed_type', 'group')
+                .eq('clan_tag', userClanTag);
         } else {
             // User has no clan, show no group posts
             postsQuery = postsQuery.eq('feed_type', 'NONEXISTENT');

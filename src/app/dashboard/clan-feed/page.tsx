@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useInView } from 'react-intersection-observer';
 import Image from 'next/image';
 import CreatePost from '@/components/create-post';
@@ -39,7 +39,7 @@ const ClanFeedPage = () => {
         triggerOnce: false
     });
 
-    const fetchPosts = async (pageNum: number, initialLoad = false) => {
+    const fetchPosts = useCallback(async (pageNum: number, initialLoad = false) => {
         if (isFetchingMore && !initialLoad) return;
         if(initialLoad) setLoading(true);
         setIsFetchingMore(true);
@@ -57,7 +57,7 @@ const ClanFeedPage = () => {
             if(initialLoad) setLoading(false);
             setIsFetchingMore(false);
         }
-    };
+    }, [activeFeed, isFetchingMore]);
 
     // Fetch user once on mount
     useEffect(() => {
@@ -71,7 +71,7 @@ const ClanFeedPage = () => {
     // Fetch posts when activeFeed changes
     useEffect(() => {
         fetchPosts(1, true);
-    }, [activeFeed]);
+    }, [activeFeed, fetchPosts]);
 
     useEffect(() => {
         if (inView && hasMorePosts && !isFetchingMore && !loading) {
@@ -79,7 +79,7 @@ const ClanFeedPage = () => {
             setPage(nextPage);
             fetchPosts(nextPage);
         }
-    }, [inView, hasMorePosts, isFetchingMore, loading, page, activeFeed]);
+    }, [inView, hasMorePosts, isFetchingMore, loading, page, activeFeed, fetchPosts]);
     
     useEffect(() => {
         if (!user?.id) return; // Don't set up subscriptions until we have a user

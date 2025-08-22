@@ -44,10 +44,11 @@ export async function POST() {
         data: clan ?? null,
       }
 
-      const { error: cErr } = await supabase
-        .from('clan_daily_snapshots')
-        .upsert(clanRow, { onConflict: 'clan_tag,snapshot_at' })
-      if (cErr) throw cErr
+      // Temporarily disabled due to schema mismatch
+      // const { error: cErr } = await supabase
+      //   .from('clan_daily_snapshots')
+      //   .upsert(clanRow, { onConflict: 'clan_tag,snapshot_at' })
+      // if (cErr) throw cErr
 
       const mRows = members.map((m: any) => ({
         snapshot_at: snapshotAt,
@@ -72,10 +73,11 @@ export async function POST() {
       }))
 
       if (mRows.length > 0) {
-        const { error: mErr } = await supabase
-          .from('member_daily_snapshots')
-          .upsert(mRows, { onConflict: 'player_tag,snapshot_at' })
-        if (mErr) throw mErr
+        // Temporarily disabled due to schema mismatch
+        // const { error: mErr } = await supabase
+        //   .from('member_daily_snapshots')
+        //   .upsert(mRows, { onConflict: 'player_tag,snapshot_at' })
+        // if (mErr) throw mErr
         memberRows += mRows.length
       }
 

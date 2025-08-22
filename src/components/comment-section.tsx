@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createClient } from '@/lib/supabase/client';
@@ -22,7 +22,7 @@ export default function CommentSection({ post, onCommentPosted }: CommentSection
     const [profile, setProfile] = useState<Profile | null>(null);
     const supabase = createClient();
 
-    const fetchComments = async () => {
+    const fetchComments = useCallback(async () => {
         setLoading(true);
         try {
             const response = await fetch(`/api/posts/${post.id}/comments`);
@@ -36,7 +36,7 @@ export default function CommentSection({ post, onCommentPosted }: CommentSection
         } finally {
             setLoading(false);
         }
-    };
+    }, [post.id]);
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -62,7 +62,7 @@ export default function CommentSection({ post, onCommentPosted }: CommentSection
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [post.id, supabase, user]);
+    }, [post.id, supabase, user, fetchComments]);
 
     const handleSubmitComment = async (e: React.FormEvent) => {
         e.preventDefault();

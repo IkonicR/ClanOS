@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,16 +31,12 @@ export function LinkedProfilesManager() {
   const { toast } = useToast();
   const supabase = createClient();
 
-  useEffect(() => {
-    fetchLinkedProfiles();
-  }, []);
-
-  const fetchLinkedProfiles = async () => {
+  const fetchLinkedProfiles = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch('/api/profile/linked-profiles');
       const data = await response.json();
-      
+
       if (response.ok) {
         setLinkedProfiles(data.linkedProfiles || []);
       } else {
@@ -60,7 +56,11 @@ export function LinkedProfilesManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchLinkedProfiles();
+  }, [fetchLinkedProfiles]);
 
   const addLinkedProfile = async (e: React.FormEvent) => {
     e.preventDefault();

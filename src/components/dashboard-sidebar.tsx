@@ -2,6 +2,7 @@
 
 import React, { memo, useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Home,
@@ -34,7 +35,7 @@ const navigationItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home, prefetch: true },
   { name: 'Members', href: '/dashboard/members', icon: Users, prefetch: true },
   { name: 'Clan Feed', href: '/dashboard/clan-feed', icon: MessageSquare, prefetch: true },
-  { name: 'War Room', href: '/dashboard/war-room', icon: Sword, disabled: true },
+  { name: 'War Room', href: '/dashboard/war-room', icon: Sword, prefetch: true },
   { name: 'Management', href: '/dashboard/clan-management', icon: Shield, prefetch: true },
   { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, prefetch: true },
 ] as const;
@@ -136,19 +137,11 @@ const NavigationItem = memo(({ item, isActive, onClick }: {
 }) => {
   const Icon = item.icon;
 
-  if (item.disabled) {
-    return (
-      <div className="flex items-center gap-3 px-3 py-2 text-sm text-muted-foreground/50 cursor-not-allowed">
-        <Icon className="w-5 h-5" />
-        <span>{item.name}</span>
-        <Badge variant="secondary" className="ml-auto text-xs">Soon</Badge>
-      </div>
-    );
-  }
+  // Note: disabled state removed from navigation items
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
-      onClick(e);
+      onClick();
     }
   };
 
@@ -300,9 +293,11 @@ export const DashboardSidebar = memo(function DashboardSidebar({
       {/* Current Clan Info */}
       <div className="flex items-center gap-3 p-4 border-b border-border/50 bg-muted/30">
         {clanBadge && (
-          <img
+          <Image
             src={clanBadge}
             alt={`${clanName} badge`}
+            width={40}
+            height={40}
             className="w-10 h-10 rounded-lg shadow-sm transition-transform hover:scale-105"
           />
         )}

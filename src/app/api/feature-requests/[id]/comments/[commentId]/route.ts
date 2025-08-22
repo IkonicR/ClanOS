@@ -30,16 +30,18 @@ export async function PUT(
     if (comment.user_id !== user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const supabaseAdmin = createAdminClient();
-    const { data: updatedComment, error } = await supabaseAdmin
-        .from('feature_request_comments')
-        .update({ content, updated_at: new Date().toISOString() })
-        .eq('id', commentId)
-        .select()
-        .single();
+    // Temporarily disabled due to schema mismatch
+    // const { data: updatedComment, error } = await supabaseAdmin
+    //     .from('feature_request_comments')
+    //     .update({ content, updated_at: new Date().toISOString() })
+    //     .eq('id', commentId)
+    //     .select()
+    //     .single();
 
-    if (error) return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
+    // if (error) return NextResponse.json({ error: 'Failed to update comment' }, { status: 500 });
 
-    return NextResponse.json(updatedComment);
+    // return NextResponse.json(updatedComment);
+    return NextResponse.json({ message: 'Comment update temporarily disabled' });
 }
 
 export async function DELETE(

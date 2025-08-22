@@ -43,16 +43,6 @@ const AdminDashboard = () => {
   const supabase = createClient();
   const { user } = useUser();
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, [user, fetchUserProfile]);
-
-  useEffect(() => {
-    if (userRole && ['admin', 'leader', 'coLeader', 'elder'].includes(userRole)) {
-      fetchAdminStats();
-    }
-  }, [userRole, userClan, fetchAdminStats]);
-
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
@@ -117,6 +107,18 @@ const AdminDashboard = () => {
       console.error('Error fetching admin stats:', error);
     }
   }, [userClan, supabase]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user, fetchUserProfile]);
+
+  useEffect(() => {
+    if (userRole && ['admin', 'leader', 'coLeader', 'elder'].includes(userRole)) {
+      fetchAdminStats();
+    }
+  }, [userRole, userClan, fetchAdminStats]);
 
   const canAccess = userRole && ['admin', 'leader', 'coLeader', 'elder'].includes(userRole);
 

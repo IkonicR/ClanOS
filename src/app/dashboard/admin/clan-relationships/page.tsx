@@ -38,18 +38,6 @@ const ClanRelationshipsPage = () => {
   const { user } = useUser();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user) {
-      fetchUserProfile();
-    }
-  }, [user, fetchUserProfile]);
-
-  useEffect(() => {
-    if (userClanTag) {
-      fetchRelationships();
-    }
-  }, [userClanTag, fetchRelationships]);
-
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
@@ -97,6 +85,18 @@ const ClanRelationshipsPage = () => {
       setLoading(false);
     }
   }, [userClanTag, supabase, toast]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user, fetchUserProfile]);
+
+  useEffect(() => {
+    if (userClanTag) {
+      fetchRelationships();
+    }
+  }, [userClanTag, fetchRelationships]);
 
   const addRelationship = async () => {
     if (!newClanTag.trim() || !userClanTag) return;

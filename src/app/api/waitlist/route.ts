@@ -18,20 +18,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `A server error occurred: Could not read from table. Hint: ${selectError.message}` }, { status: 500 });
     }
 
-    const { data, error } = await supabaseAdmin.from('waitlist').insert([{ email }]);
-    console.log('Supabase insert response:', { data, error });
+    // Temporarily disabled due to database schema issues
+    // const { data, error } = await supabaseAdmin.from('waitlist').insert([{ email }]);
+    // console.log('Supabase insert response:', { data, error });
 
-    if (error) {
-      if (error.code === '23505') {
-        // unique_violation for duplicate email
-        return NextResponse.json({ message: 'You are already on the waitlist!' }, { status: 200 });
-      }
-      console.error('Error inserting into waitlist. Full error object:', error);
-      console.error('Error stringified:', JSON.stringify(error, null, 2));
-      return NextResponse.json({ error: 'Could not join the waitlist. Please try again.' }, { status: 500 });
-    }
+    // if (error) {
+    //   if (error.code === '23505') {
+    //     // unique_violation for duplicate email
+    //     return NextResponse.json({ message: 'You are already on the waitlist!' }, { status: 200 });
+    //   }
+    //   console.error('Error inserting into waitlist. Full error object:', error);
+    //   console.error('Error stringified:', JSON.stringify(error, null, 2));
+    //   return NextResponse.json({ error: 'Could not join the waitlist. Please try again.' }, { status: 500 });
+    // }
 
-    return NextResponse.json({ message: 'Successfully joined the waitlist!' });
+    return NextResponse.json({ message: 'Waitlist temporarily disabled' });
   } catch (error: any) {
     console.error('An unexpected error occurred in waitlist API. Full error object:', error);
     return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });

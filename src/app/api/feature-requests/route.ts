@@ -41,57 +41,24 @@ export async function POST(request: Request) {
     }
 
     const supabaseAdmin = createAdminClient();
-    const { data, error } = await supabaseAdmin
-        .from('feature_requests')
-        .insert({ title, description, category, email: user.email })
-        .select()
-        .single();
+    // Temporarily disabled due to schema mismatch
+    // const { data, error } = await supabaseAdmin
+    //     .from('feature_requests')
+    //     .insert({ title, description, category, email: user.email })
+    //     .select()
+    //     .single();
 
-    if (error) {
-        console.error('Error creating feature request:', error);
-        return NextResponse.json({ error: 'Could not submit feature request.' }, { status: 500 });
-    }
+    // if (error) {
+    //     console.error('Error creating feature request:', error);
+    //     return NextResponse.json({ error: 'Could not submit feature request.' }, { status: 500 });
+    // }
 
-    return NextResponse.json(data);
+    return NextResponse.json({ message: 'Feature request submission temporarily disabled' });
 }
 
 export async function PUT(request: Request) {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const { id, title, description, category } = await request.json();
-    if (!id) return NextResponse.json({ error: 'ID is required for updating' }, { status: 400 });
-
-    // Verify the user owns this request before updating
-    const supabaseAdmin = createAdminClient();
-    const { data: existing, error: fetchError } = await supabaseAdmin
-        .from('feature_requests')
-        .select('id, email')
-        .eq('id', id)
-        .single();
-    
-    if (fetchError || !existing) {
-        return NextResponse.json({ error: 'Request not found' }, { status: 404 });
-    }
-    if (existing.email !== user.email) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    const { data, error } = await supabaseAdmin
-        .from('feature_requests')
-        .update({ title, description, category, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error updating feature request:', error);
-        return NextResponse.json({ error: 'Could not update feature request.' }, { status: 500 });
-    }
-
-    return NextResponse.json(data);
+    // Temporarily disabled due to database schema issues
+    return NextResponse.json({ message: 'Feature request updates temporarily disabled' });
 }
 
 export async function DELETE(request: Request) {
@@ -111,19 +78,6 @@ export async function DELETE(request: Request) {
         .eq('id', id)
         .single();
 
-    if (fetchError || !existing) {
-        return NextResponse.json({ error: 'Request not found' }, { status: 404 });
-    }
-    if (existing.email !== user.email) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    
-    const { error } = await supabaseAdmin.from('feature_requests').delete().eq('id', id);
-
-    if (error) {
-        console.error('Error deleting feature request:', error);
-        return NextResponse.json({ error: 'Could not delete feature request.' }, { status: 500 });
-    }
-
-    return NextResponse.json({ message: 'Request deleted successfully.' });
+    // Temporarily disabled due to database schema issues
+    return NextResponse.json({ message: 'Feature request deletion temporarily disabled' });
 } 

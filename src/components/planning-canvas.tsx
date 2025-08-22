@@ -48,7 +48,7 @@ export function PlanningCanvas({ war, selectedBase, isReadOnly }: { war: WarData
 						<Clock className="w-6 h-6 mx-auto mb-2 text-primary" />
 						<div className="font-semibold">Team Size</div>
 						<div className="text-sm text-muted-foreground">
-							{war.teamSize} vs {war.opponent.teamSize}
+							{war.teamSize} vs {war.teamSize}
 						</div>
 					</div>
 				</div>

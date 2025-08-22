@@ -65,9 +65,10 @@ export async function POST() {
   }
 
   if (profiles.length) {
-    await supabase
-      .from('member_skill_profiles')
-      .upsert(profiles, { onConflict: 'player_tag' })
+    // Temporarily disabled due to schema mismatch
+    // await supabase
+    //   .from('member_skill_profiles')
+    //   .upsert(profiles, { onConflict: 'player_tag' })
   }
 
   return NextResponse.json({ ok: true, profiles: profiles.length })

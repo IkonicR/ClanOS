@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { OverviewDashboard } from '@/components/analytics/overview-dashboard';
 import { MemberAnalytics } from '@/components/analytics/member-analytics';
@@ -77,7 +77,7 @@ export default function AnalyticsPage() {
   const [capitalError, setCapitalError] = useState<string | null>(null);
   const [insightsError, setInsightsError] = useState<string | null>(null);
 
-  const fetchOverviewData = async (retryCount = 0) => {
+  const fetchOverviewData = useCallback(async (retryCount = 0) => {
     const maxRetries = 2;
     if (retryCount > 0) {
       setOverviewRetrying(true);
@@ -122,9 +122,9 @@ export default function AnalyticsPage() {
       setOverviewLoading(false);
       setOverviewRetrying(false);
     }
-  };
+  }, []);
 
-  const fetchMemberData = async (retryCount = 0) => {
+  const fetchMemberData = useCallback(async (retryCount = 0) => {
     const maxRetries = 2;
     if (retryCount > 0) {
       setMemberRetrying(true);
@@ -159,9 +159,9 @@ export default function AnalyticsPage() {
       setMemberLoading(false);
       setMemberRetrying(false);
     }
-  };
+  }, []);
 
-  const fetchWarData = async (retryCount = 0) => {
+  const fetchWarData = useCallback(async (retryCount = 0) => {
     const maxRetries = 2;
     if (retryCount > 0) {
       setWarRetrying(true);
@@ -196,9 +196,9 @@ export default function AnalyticsPage() {
       setWarLoading(false);
       setWarRetrying(false);
     }
-  };
+  }, []);
 
-  const fetchCapitalData = async () => {
+  const fetchCapitalData = useCallback(async () => {
     setCapitalLoading(true);
     setCapitalError(null);
     try {
@@ -211,9 +211,9 @@ export default function AnalyticsPage() {
     } finally {
       setCapitalLoading(false);
     }
-  };
+  }, []);
 
-  const fetchInsightsData = async () => {
+  const fetchInsightsData = useCallback(async () => {
     setInsightsLoading(true);
     setInsightsError(null);
     try {
@@ -226,7 +226,7 @@ export default function AnalyticsPage() {
     } finally {
       setInsightsLoading(false);
     }
-  };
+  }, []);
 
   const fetchSelectionData = async () => {
     setSelectionLoading(true);
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
     };
 
     preloadAllData();
-  }, []);
+  }, [fetchOverviewData, fetchMemberData, fetchWarData, fetchCapitalData, fetchInsightsData]);
 
   if (isRefreshing) {
     return (
@@ -407,7 +407,7 @@ export default function AnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive insights into your clan's performance</p>
+          <p className="text-muted-foreground">Comprehensive insights into your clan&apos;s performance</p>
         </div>
         <div className="flex gap-2">
           <ExportButton
@@ -538,7 +538,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading overview data: {overviewError}</p>
-                  <Button onClick={fetchOverviewData} variant="outline">
+                  <Button onClick={() => fetchOverviewData()} variant="outline">
                     Try Again
                   </Button>
                 </div>
@@ -568,7 +568,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading member data: {memberError}</p>
-                  <Button onClick={fetchMemberData} variant="outline">
+                  <Button onClick={() => fetchMemberData()} variant="outline">
                     Try Again
                   </Button>
                 </div>
@@ -579,7 +579,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchMemberData} variant="outline">
+                <Button onClick={() => fetchMemberData()} variant="outline">
                   Load Member Analytics
                 </Button>
               </CardContent>
@@ -608,7 +608,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading war data: {warError}</p>
-                  <Button onClick={fetchWarData} variant="outline">
+                  <Button onClick={() => fetchWarData()} variant="outline">
                     Try Again
                   </Button>
                 </div>
@@ -619,7 +619,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchWarData} variant="outline">
+                <Button onClick={() => fetchWarData()} variant="outline">
                   Load War Analytics
                 </Button>
               </CardContent>
@@ -648,7 +648,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading capital data: {capitalError}</p>
-                  <Button onClick={fetchCapitalData} variant="outline">
+                  <Button onClick={() => fetchCapitalData()} variant="outline">
                     Try Again
                   </Button>
                 </div>
@@ -659,7 +659,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchCapitalData} variant="outline">
+                <Button onClick={() => fetchCapitalData()} variant="outline">
                   Load Capital Analytics
                 </Button>
               </CardContent>
@@ -686,7 +686,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading insights data: {insightsError}</p>
-                  <Button onClick={fetchInsightsData} variant="outline">
+                  <Button onClick={() => fetchInsightsData()} variant="outline">
                     Try Again
                   </Button>
                 </div>
@@ -704,7 +704,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchInsightsData} variant="outline">
+                <Button onClick={() => fetchInsightsData()} variant="outline">
                   Load AI Insights
                 </Button>
               </CardContent>
@@ -731,7 +731,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading selection: {selectionError}</p>
-                  <Button onClick={fetchSelectionData} variant="outline">Try Again</Button>
+                  <Button onClick={() => fetchSelectionData()} variant="outline">Try Again</Button>
                 </div>
               </CardContent>
             </Card>
@@ -740,7 +740,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchSelectionData} variant="outline">Load Selection</Button>
+                <Button onClick={() => fetchSelectionData()} variant="outline">Load Selection</Button>
               </CardContent>
             </Card>
           )}
@@ -765,7 +765,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading attendance: {attendanceError}</p>
-                  <Button onClick={fetchAttendanceData} variant="outline">Try Again</Button>
+                  <Button onClick={() => fetchAttendanceData()} variant="outline">Try Again</Button>
                 </div>
               </CardContent>
             </Card>
@@ -774,7 +774,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchAttendanceData} variant="outline">Load Attendance</Button>
+                <Button onClick={() => fetchAttendanceData()} variant="outline">Load Attendance</Button>
               </CardContent>
             </Card>
           )}
@@ -799,7 +799,7 @@ export default function AnalyticsPage() {
               <CardContent className="flex items-center justify-center p-8">
                 <div className="text-center">
                   <p className="text-destructive mb-4">Error loading targets: {targetsError}</p>
-                  <Button onClick={fetchTargetsData} variant="outline">Try Again</Button>
+                  <Button onClick={() => fetchTargetsData()} variant="outline">Try Again</Button>
                 </div>
               </CardContent>
             </Card>
@@ -808,7 +808,7 @@ export default function AnalyticsPage() {
           ) : (
             <Card className="bg-card/75 backdrop-blur-lg">
               <CardContent className="flex items-center justify-center p-8">
-                <Button onClick={fetchTargetsData} variant="outline">Load Targets</Button>
+                <Button onClick={() => fetchTargetsData()} variant="outline">Load Targets</Button>
               </CardContent>
             </Card>
           )}

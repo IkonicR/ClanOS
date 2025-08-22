@@ -71,16 +71,7 @@ export function WarRoomClient() {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const isLandscape = useMediaQuery("(orientation: landscape)");
   
-  useEffect(() => {
-    // Set the default size for tldraw shapes based on screen size
-    if (isDesktop) {
-      DefaultSizeStyle.setDefaultValue('m');
-    } else {
-      DefaultSizeStyle.setDefaultValue('xl');
-    }
-    // Revert to default when component unmounts
-    return () => DefaultSizeStyle.setDefaultValue('m');
-  }, [isDesktop]);
+  // Note: tldraw code has been removed and replaced with a placeholder component
 
   const handleBaseSelect = (member: WarMember) => {
     if (!isDesktop) {
