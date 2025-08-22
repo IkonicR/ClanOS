@@ -1,15 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: [
-    'tldraw',
-    '@tldraw/editor',
-    '@tldraw/state',
-    '@tldraw/store',
-    '@tldraw/utils',
-    '@tldraw/validate',
-    '@tldraw/tlschema',
-    '@tldraw/state-react',
-  ],
+  // Removed tldraw transpilation - replaced with simple placeholder
   experimental: {
     // Removed optimizePackageImports for @tldraw/editor due to import errors
   },
